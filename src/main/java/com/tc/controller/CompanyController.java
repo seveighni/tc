@@ -68,4 +68,6 @@ public class CompanyController {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 	}
+
+    //TODO: Delete company
 }
