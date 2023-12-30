@@ -1,10 +1,10 @@
-package com.seveighni.transportcompany;
+package com.tc;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class TransportcompanyApplicationTests {
+class ApplicationTests {
 
 	@Test
 	void contextLoads() {
