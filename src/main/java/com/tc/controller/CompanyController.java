@@ -20,21 +20,27 @@ import com.tc.response.CompanyResponse;
 @RestController
 @RequestMapping("/api")
 public class CompanyController {
+    private final CompanyRepository companyRepository;
 
-    @Autowired
-    CompanyRepository companyRepository;
+    public CompanyController(CompanyRepository companyRepository) {
+        this.companyRepository = companyRepository;
+    }
 
     @GetMapping("/companies/{id}")
     public ResponseEntity<CompanyResponse> getCompanyById(@PathVariable("id") long id) {
-       var data = companyRepository.findById(id);
+        try {
+            var data = companyRepository.findById(id);
 
-        if (data.isPresent()) {
-            var response = new CompanyResponse(
-                    data.get().getId(),
-                    data.get().getName());
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            if (data.isPresent()) {
+                var response = new CompanyResponse(
+                        data.get().getId(),
+                        data.get().getName());
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -53,21 +59,26 @@ public class CompanyController {
     }
 
     @PutMapping("/companies/{id}")
-	public ResponseEntity<CompanyResponse> updateCompany(@PathVariable("id") long id, @RequestBody UpdateCompanyRequest request) {
-		var company = companyRepository.findById(id);
+    public ResponseEntity<CompanyResponse> updateCompany(@PathVariable("id") long id,
+            @RequestBody UpdateCompanyRequest request) {
+        try {
+            var company = companyRepository.findById(id);
 
-		if (company.isPresent()) {
-			var update = company.get();
-			update.setName(request.name());
-            var updated = companyRepository.save(update);
-            var response = new CompanyResponse(
-                    updated.getId(),
-                    updated.getName());
-			return new ResponseEntity<>(response, HttpStatus.OK);
-		} else {
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		}
-	}
+            if (company.isPresent()) {
+                var update = company.get();
+                update.setName(request.name());
+                var updated = companyRepository.save(update);
+                var response = new CompanyResponse(
+                        updated.getId(),
+                        updated.getName());
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
-    //TODO: Delete company
+    // TODO: Delete company
 }
