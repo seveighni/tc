@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### POSTGRES AND PGADMIN LOCAL DATA ###
+/db
+/pgadmin-data

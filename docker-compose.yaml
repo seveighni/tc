@@ -1,0 +1,26 @@
+version: '3.9'
+
+services:
+
+  postgres:
+    image: postgres
+    ports:
+      - 3001:5432
+    restart: always
+    volumes:
+      - ./db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: admin
+      POSTGRES_USER: admin
+      POSTGRES_DB: tc
+
+  pgadmin:
+    image: dpage/pgadmin4:8.1
+    restart: always
+    ports:
+      - "3002:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    volumes:
+      - ./pgadmin-data:/var/lib/pgadmin
