@@ -16,6 +16,7 @@ import com.tc.repository.CompanyRepository;
 import com.tc.repository.EmployeeRepository;
 import com.tc.request.CreateEmployeeRequest;
 import com.tc.request.UpdateEmployeeRequest;
+import com.tc.response.CompanyResponse;
 import com.tc.response.EmployeeDetailedResponse;
 import com.tc.response.EmployeeResponse;
 
@@ -47,15 +48,15 @@ public class EmployeeController {
     public ResponseEntity<EmployeeResponse> hireEmployee(@PathVariable("companyId") Long companyId,
             @RequestBody CreateEmployeeRequest request) {
         try {
-            var employeeOpt = companyRepository.findById(companyId).map(company -> {
-                var update = new Employee(request.firstName(), request.lastName());
-                update.setCompany(company);
-                return employeeRepository.save(update);
-            });
-            if (!employeeOpt.isPresent()) {
+            var companyOpt = companyRepository.findById(companyId);
+            if (!companyOpt.isPresent()) {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
-            var employee = employeeOpt.get();
+
+            var update = new Employee(request.firstName(), request.lastName());
+            update.setCompany(companyOpt.get());
+            var employee = employeeRepository.save(update);
+
             var response = new EmployeeResponse(employee.getId(), employee.getFistName(),
                     employee.getLastName());
             return new ResponseEntity<>(response, HttpStatus.CREATED);
@@ -72,11 +73,12 @@ public class EmployeeController {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
             var employee = employeeOpt.get();
+            var company = employee.getCompany();
             var response = new EmployeeDetailedResponse(
                     employee.getId(),
                     employee.getFistName(),
                     employee.getLastName(),
-                    employee.getCompany().getId());
+                    new CompanyResponse(company.getId(), company.getName()));
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -95,11 +97,12 @@ public class EmployeeController {
             employee.setFirstName(request.firstName());
             employee.setLastName(request.lastName());
             var updated = employeeRepository.save(employee);
+            var company = updated.getCompany();
             var response = new EmployeeDetailedResponse(
                     updated.getId(),
                     updated.getFistName(),
                     updated.getLastName(),
-                    updated.getCompany().getId());
+                    new CompanyResponse(company.getId(), company.getName()));
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);

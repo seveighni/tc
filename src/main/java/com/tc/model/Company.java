@@ -1,10 +1,15 @@
 package com.tc.model;
 
+import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -18,8 +23,16 @@ public class Company {
 
     private String name;
 
-    @OneToMany(mappedBy="company", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "company", fetch = FetchType.LAZY)
     Set<Employee> employees;
+
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {
+            CascadeType.PERSIST,
+            CascadeType.MERGE
+    })
+    @JoinTable(name = "company_customer", joinColumns = { @JoinColumn(name = "company_id") }, inverseJoinColumns = {
+            @JoinColumn(name = "customer_id") })
+    private Set<Customer> customers = new HashSet<>();
 
     public Company() {
     }
@@ -40,11 +53,32 @@ public class Company {
         this.name = name;
     }
 
-    public Set<Employee> getEmployees(){
+    public Set<Employee> getEmployees() {
         return this.employees;
     }
 
-    public void setEmployees(Set<Employee> employees){
+    public void setEmployees(Set<Employee> employees) {
         this.employees = employees;
+    }
+
+    public Set<Customer> getCustomers() {
+        return this.customers;
+    }
+
+    public void setCustomers(Set<Customer> customers) {
+        this.customers = customers;
+    }
+
+    public void addCustomer(Customer customer) {
+        this.customers.add(customer);
+        customer.getCompanies().add(this);
+    }
+
+    public void removeCustomer(long customerId) {
+        var customer = this.customers.stream().filter(c -> c.getId() == customerId).findFirst().orElse(null);
+        if (customer != null) {
+            this.customers.remove(customer);
+            customer.getCompanies().remove(this);
+        }
     }
 }
