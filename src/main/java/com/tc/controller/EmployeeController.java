@@ -20,6 +20,9 @@ import com.tc.response.CompanyResponse;
 import com.tc.response.EmployeeDetailedResponse;
 import com.tc.response.EmployeeResponse;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+@Tag(name = "Employee")
 @RestController
 @RequestMapping("/api")
 public class EmployeeController {

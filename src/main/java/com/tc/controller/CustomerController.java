@@ -22,6 +22,9 @@ import com.tc.response.CompanyResponse;
 import com.tc.response.CustomerDetailedResponse;
 import com.tc.response.CustomerResponse;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+@Tag(name = "Customer")
 @RestController
 @RequestMapping("/api")
 public class CustomerController {

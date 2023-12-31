@@ -17,6 +17,9 @@ import com.tc.request.CreateCompanyRequest;
 import com.tc.request.UpdateCompanyRequest;
 import com.tc.response.CompanyResponse;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+@Tag(name = "Company")
 @RestController
 @RequestMapping("/api")
 public class CompanyController {
