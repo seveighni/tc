@@ -1,3 +1,3 @@
 package com.tc.response;
 
-public record CompanyResponse(Integer id, String name){}
+public record CompanyResponse(Long id, String name){}

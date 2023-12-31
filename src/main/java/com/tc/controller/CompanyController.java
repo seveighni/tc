@@ -12,18 +12,24 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.tc.model.Company;
+import com.tc.model.Employee;
 import com.tc.repository.CompanyRepository;
+import com.tc.repository.EmployeeRepository;
 import com.tc.request.CreateCompanyRequest;
+import com.tc.request.CreateEmployeeRequest;
 import com.tc.request.UpdateCompanyRequest;
 import com.tc.response.CompanyResponse;
+import com.tc.response.EmployeeResponse;
 
 @RestController
 @RequestMapping("/api")
 public class CompanyController {
     private final CompanyRepository companyRepository;
+    private final EmployeeRepository employeeRepository;
 
-    public CompanyController(CompanyRepository companyRepository) {
+    public CompanyController(CompanyRepository companyRepository, EmployeeRepository employeeRepository) {
         this.companyRepository = companyRepository;
+        this.employeeRepository = employeeRepository;
     }
 
     @GetMapping("/companies/{id}")
