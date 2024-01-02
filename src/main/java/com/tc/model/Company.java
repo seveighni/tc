@@ -26,6 +26,9 @@ public class Company {
     @OneToMany(mappedBy = "company", fetch = FetchType.LAZY)
     Set<Employee> employees;
 
+    @OneToMany(mappedBy = "company", fetch = FetchType.LAZY)
+    Set<Vehicle> vehicles;
+
     @ManyToMany(fetch = FetchType.LAZY, cascade = {
             CascadeType.PERSIST,
             CascadeType.MERGE
@@ -59,6 +62,14 @@ public class Company {
 
     public void setEmployees(Set<Employee> employees) {
         this.employees = employees;
+    }
+
+    public Set<Vehicle> getVehicles() {
+        return this.vehicles;
+    }
+
+    public void setVehicles(Set<Vehicle> vehicles) {
+        this.vehicles = vehicles;
     }
 
     public Set<Customer> getCustomers() {
