@@ -12,7 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 
 @Entity
-public class Employee {
+public class Driver {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -26,10 +26,10 @@ public class Employee {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Company company;
 
-    public Employee() {
+    public Driver() {
     }
 
-    public Employee(String firstName, String lastName) {
+    public Driver(String firstName, String lastName) {
         this.firstName = firstName;
         this.lastName = lastName;
     }

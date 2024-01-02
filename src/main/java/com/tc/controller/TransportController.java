@@ -14,7 +14,7 @@ import com.tc.model.CargoTransport;
 import com.tc.model.PassengerTransport;
 import com.tc.repository.CompanyRepository;
 import com.tc.repository.CustomerRepository;
-import com.tc.repository.EmployeeRepository;
+import com.tc.repository.DriverRepository;
 import com.tc.repository.TransportRepository;
 import com.tc.repository.VehicleRepository;
 import com.tc.request.CreateCargoTransportRequest;
@@ -26,20 +26,20 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RequestMapping("/api")
 public class TransportController {
     private final CompanyRepository companyRepository;
-    private final EmployeeRepository employeeRepository;
+    private final DriverRepository driverRepository;
     private final CustomerRepository customerRepository;
     private final VehicleRepository vehicleRepository;
     private final TransportRepository<CargoTransport> cargoTransportRepository;
     private final TransportRepository<PassengerTransport> passengerTransportRepository;
 
     public TransportController(CompanyRepository companyRepository,
-            EmployeeRepository employeeRepository,
+            DriverRepository driverRepository,
             CustomerRepository customerRepository,
             VehicleRepository vehicleRepository,
             TransportRepository<CargoTransport> cargoTransportRepository,
             TransportRepository<PassengerTransport> passengerTransportRepository) {
         this.companyRepository = companyRepository;
-        this.employeeRepository = employeeRepository;
+        this.driverRepository = driverRepository;
         this.customerRepository = customerRepository;
         this.vehicleRepository = vehicleRepository;
         this.cargoTransportRepository = cargoTransportRepository;
@@ -67,7 +67,7 @@ public class TransportController {
                     transport.getIsPayed(),
                     transport.getCustomer().getId(),
                     transport.getVehicle().getId(),
-                    transport.getEmployee().getId());
+                    transport.getDriver().getId());
         }).toList();
         return new ResponseEntity<>(cargoTransportResponse, HttpStatus.OK);
     }
@@ -82,9 +82,9 @@ public class TransportController {
             }
             var company = companyOpt.get();
 
-            var employeeOpt = company.getEmployees().stream()
-                    .filter(employee -> employee.getId() == request.employeeId()).findFirst();
-            if (!employeeOpt.isPresent()) {
+            var driverOpt = company.getDrivers().stream()
+                    .filter(driver -> driver.getId() == request.driverId()).findFirst();
+            if (!driverOpt.isPresent()) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
 
@@ -112,10 +112,10 @@ public class TransportController {
                     false);
             var customer = customerOpt.get();
             var vehicle = vehicleOpt.get();
-            var employee = employeeOpt.get();
+            var driver = driverOpt.get();
             cargoTransport.setCompany(company);
             cargoTransport.setCustomer(customer);
-            cargoTransport.setEmployee(employee);
+            cargoTransport.setDriver(driver);
             cargoTransport.setVehicle(vehicle);
             var saved = this.cargoTransportRepository.save(cargoTransport);
             var response = new CargoTransportResponse(
@@ -130,7 +130,7 @@ public class TransportController {
                     saved.getIsPayed(),
                     saved.getCustomer().getId(),
                     saved.getVehicle().getId(),
-                    saved.getEmployee().getId());
+                    saved.getDriver().getId());
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);

@@ -33,8 +33,8 @@ public abstract class Transport {
     @JoinColumn(name = "company_id", nullable = false)
     private Company company;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "employee_id", nullable = false)
-    private Employee employee;
+    @JoinColumn(name = "driver_id", nullable = false)
+    private Driver driver;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
@@ -120,12 +120,12 @@ public abstract class Transport {
         this.company = company;
     }
 
-    public Employee getEmployee() {
-        return this.employee;
+    public Driver getDriver() {
+        return this.driver;
     }
 
-    public void setEmployee(Employee employee) {
-        this.employee = employee;
+    public void setDriver(Driver driver) {
+        this.driver = driver;
     }
 
     public Customer getCustomer() {

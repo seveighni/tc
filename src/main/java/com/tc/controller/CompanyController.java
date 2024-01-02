@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.tc.model.Company;
 import com.tc.repository.CompanyRepository;
-import com.tc.repository.EmployeeRepository;
+import com.tc.repository.DriverRepository;
 import com.tc.request.CreateCompanyRequest;
 import com.tc.request.UpdateCompanyRequest;
 import com.tc.response.CompanyResponse;
@@ -25,7 +25,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class CompanyController {
     private final CompanyRepository companyRepository;
 
-    public CompanyController(CompanyRepository companyRepository, EmployeeRepository employeeRepository) {
+    public CompanyController(CompanyRepository companyRepository, DriverRepository driverRepository) {
         this.companyRepository = companyRepository;
     }
 

@@ -24,7 +24,7 @@ public class Company {
     private String name;
 
     @OneToMany(mappedBy = "company", fetch = FetchType.LAZY)
-    Set<Employee> employees;
+    Set<Driver> drivers;
 
     @OneToMany(mappedBy = "company", fetch = FetchType.LAZY)
     Set<Vehicle> vehicles;
@@ -56,12 +56,12 @@ public class Company {
         this.name = name;
     }
 
-    public Set<Employee> getEmployees() {
-        return this.employees;
+    public Set<Driver> getDrivers() {
+        return this.drivers;
     }
 
-    public void setEmployees(Set<Employee> employees) {
-        this.employees = employees;
+    public void setDrivers(Set<Driver> drivers) {
+        this.drivers = drivers;
     }
 
     public Set<Vehicle> getVehicles() {

@@ -15,6 +15,6 @@ public record CargoTransportResponse (
     Boolean isPayed,
     Long customerId,
     Long vehicleId,
-    Long employeeId
+    Long driverId
 ) {
 }
