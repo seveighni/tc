@@ -9,6 +9,30 @@ curl -X 'POST' \
 }'
 
 curl -X 'POST' \
+  'http://localhost:8080/api/companies' \
+  -H 'accept: */*' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "name": "Abc"
+}'
+
+curl -X 'POST' \
+  'http://localhost:8080/api/companies' \
+  -H 'accept: */*' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "name": "aabc"
+}'
+
+curl -X 'POST' \
+  'http://localhost:8080/api/companies' \
+  -H 'accept: */*' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "name": "Xyz"
+}'
+
+curl -X 'POST' \
   'http://localhost:8080/api/companies/1/customers' \
   -H 'accept: */*' \
   -H 'Content-Type: application/json' \
