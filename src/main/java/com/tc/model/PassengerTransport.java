@@ -7,23 +7,23 @@ import jakarta.persistence.Entity;
 
 @Entity
 public class PassengerTransport extends Transport {
-    private String numberOfPassengers;
+    private Integer numberOfPassengers;
 
     public PassengerTransport() {
         super();
     }
 
     public PassengerTransport(String startAddress, String endAddress, LocalDate startDate, LocalDate endDate,
-            String numberOfPassengers, BigDecimal price, Boolean isPayed) {
+            Integer numberOfPassengers, BigDecimal price, Boolean isPayed) {
         super(startAddress, endAddress, startDate, endDate, price, isPayed);
         this.numberOfPassengers = numberOfPassengers;
     }
 
-    public String getNumberOfPassengers() {
+    public Integer getNumberOfPassengers() {
         return this.numberOfPassengers;
     }
 
-    public void setNumberOfPassengers(String numberOfPassengers) {
+    public void setNumberOfPassengers(Integer numberOfPassengers) {
         this.numberOfPassengers = numberOfPassengers;
     }
 }

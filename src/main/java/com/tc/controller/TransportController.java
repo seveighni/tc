@@ -18,7 +18,10 @@ import com.tc.repository.DriverRepository;
 import com.tc.repository.TransportRepository;
 import com.tc.repository.VehicleRepository;
 import com.tc.request.CreateCargoTransportRequest;
+import com.tc.request.CreatePassengerTransportRequest;
 import com.tc.response.CargoTransportResponse;
+import com.tc.response.PassengerTransportResponse;
+
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "Transport")
@@ -126,6 +129,93 @@ public class TransportController {
                     saved.getEndDate(),
                     saved.getCargoType(),
                     saved.getCargoWeight(),
+                    saved.getPrice(),
+                    saved.getIsPayed(),
+                    saved.getCustomer().getId(),
+                    saved.getVehicle().getId(),
+                    saved.getDriver().getId());
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/companies/{companyId}/passengertransport")
+    public ResponseEntity<List<PassengerTransportResponse>> getPassengerTransportByCompanyId(
+            @PathVariable("companyId") Long companyId) {
+        var company = companyRepository.findById(companyId);
+        if (!company.isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        var passengerTransport = passengerTransportRepository.findByCompanyId(companyId);
+        var passengerTransportResponse = passengerTransport.stream().map(transport -> {
+            return new PassengerTransportResponse(
+                    transport.getId(),
+                    transport.getStartAddress(),
+                    transport.getEndAddress(),
+                    transport.getStartDate(),
+                    transport.getEndDate(),
+                    transport.getNumberOfPassengers(),
+                    transport.getPrice(),
+                    transport.getIsPayed(),
+                    transport.getCustomer().getId(),
+                    transport.getVehicle().getId(),
+                    transport.getDriver().getId());
+        }).toList();
+        return new ResponseEntity<>(passengerTransportResponse, HttpStatus.OK);
+    }
+
+    @PostMapping("/companies/{companyId}/passengertransport")
+    public ResponseEntity<PassengerTransportResponse> createPassengerTransport(
+            @PathVariable("companyId") Long companyId,
+            @RequestBody CreatePassengerTransportRequest request) {
+        try {
+            var companyOpt = companyRepository.findById(companyId);
+            if (!companyOpt.isPresent()) {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+            var company = companyOpt.get();
+
+            var driverOpt = company.getDrivers().stream()
+                    .filter(driver -> driver.getId() == request.driverId()).findFirst();
+            if (!driverOpt.isPresent()) {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+
+            var customerOpt = company.getCustomers().stream()
+                    .filter(customer -> customer.getId() == request.customerId()).findFirst();
+            if (!customerOpt.isPresent()) {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+
+            var vehicleOpt = company.getVehicles().stream()
+                    .filter(vehicle -> vehicle.getId() == request.vehicleId()).findFirst();
+            if (!vehicleOpt.isPresent()) {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+            var passengerTransport = new PassengerTransport(
+                    request.startAddress(),
+                    request.endAddress(),
+                    request.startDate(),
+                    request.endDate(),
+                    request.numberOfPassengers(),
+                    request.price(),
+                    false);
+            var customer = customerOpt.get();
+            var vehicle = vehicleOpt.get();
+            var driver = driverOpt.get();
+            passengerTransport.setCompany(company);
+            passengerTransport.setCustomer(customer);
+            passengerTransport.setDriver(driver);
+            passengerTransport.setVehicle(vehicle);
+            var saved = this.passengerTransportRepository.save(passengerTransport);
+            var response = new PassengerTransportResponse(
+                    saved.getId(),
+                    saved.getStartAddress(),
+                    saved.getEndAddress(),
+                    saved.getStartDate(),
+                    saved.getEndDate(),
+                    saved.getNumberOfPassengers(),
                     saved.getPrice(),
                     saved.getIsPayed(),
                     saved.getCustomer().getId(),
