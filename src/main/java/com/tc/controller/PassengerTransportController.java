@@ -137,6 +137,26 @@ public class PassengerTransportController {
         }
     }
 
+    @GetMapping("/passengertransport")
+    public ResponseEntity<List<PassengerTransportResponse>> getAllPassengerTransport() {
+        var passengerTransport = passengerTransportRepository.findAll();
+        var passengerTransportResponse = passengerTransport.stream().map(transport -> {
+            return new PassengerTransportResponse(
+                    transport.getId(),
+                    transport.getStartAddress(),
+                    transport.getEndAddress(),
+                    transport.getStartDate(),
+                    transport.getEndDate(),
+                    transport.getNumberOfPassengers(),
+                    transport.getPrice(),
+                    transport.getIsPaid(),
+                    transport.getCustomer().getId(),
+                    transport.getVehicle().getId(),
+                    transport.getDriver().getId());
+        }).toList();
+        return new ResponseEntity<>(passengerTransportResponse, HttpStatus.OK);
+    }
+
     @GetMapping("/passengertransport/{id}")
     public ResponseEntity<PassengerTransportResponse> getPassengerTransportById(@PathVariable("id") Long id) {
         var passengerTransportOpt = passengerTransportRepository.findById(id);

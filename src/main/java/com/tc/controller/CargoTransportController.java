@@ -137,6 +137,27 @@ public class CargoTransportController {
         }
     }
 
+    @GetMapping("/cargotransport")
+    public ResponseEntity<List<CargoTransportResponse>> getAllCargoTransport() {
+        var cargoTransport = cargoTransportRepository.findAll();
+        var cargoTransportResponse = cargoTransport.stream().map(transport -> {
+            return new CargoTransportResponse(
+                    transport.getId(),
+                    transport.getStartAddress(),
+                    transport.getEndAddress(),
+                    transport.getStartDate(),
+                    transport.getEndDate(),
+                    transport.getCargoType(),
+                    transport.getCargoWeight(),
+                    transport.getPrice(),
+                    transport.getIsPaid(),
+                    transport.getCustomer().getId(),
+                    transport.getVehicle().getId(),
+                    transport.getDriver().getId());
+        }).toList();
+        return new ResponseEntity<>(cargoTransportResponse, HttpStatus.OK);
+    }
+
     @GetMapping("/cargotransport/{id}")
     public ResponseEntity<CargoTransportResponse> getCargoTransportById(@PathVariable("id") Long id) {
         var cargoTransportOpt = cargoTransportRepository.findById(id);
