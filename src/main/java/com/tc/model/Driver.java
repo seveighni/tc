@@ -1,5 +1,6 @@
 package com.tc.model;
 
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -27,6 +28,8 @@ public class Driver {
     private String firstName;
     private String lastName;
 
+    private BigDecimal salary;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "company_id", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
@@ -43,9 +46,10 @@ public class Driver {
     public Driver() {
     }
 
-    public Driver(String firstName, String lastName) {
+    public Driver(String firstName, String lastName, BigDecimal salary) {
         this.firstName = firstName;
         this.lastName = lastName;
+        this.salary = salary;
     }
 
     public Long getId() {
@@ -66,6 +70,14 @@ public class Driver {
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
+    }
+
+    public BigDecimal getSalary() {
+        return this.salary;
+    }
+
+    public void setSalary(BigDecimal salary) {
+        this.salary = salary;
     }
 
     public Company getCompany() {

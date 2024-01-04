@@ -1,4 +1,6 @@
 package com.tc.response;
 
-public record DriverResponse(Long id, String firstName, String lastName) {
+import java.math.BigDecimal;
+
+public record DriverResponse(Long id, String firstName, String lastName, BigDecimal salary) {
 }

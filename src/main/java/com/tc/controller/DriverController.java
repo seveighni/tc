@@ -43,7 +43,7 @@ public class DriverController {
         }
         List<Driver> drivers = driverRepository.findByCompanyId(companyId);
         var driversResponse = drivers.stream().map(driver -> {
-            return new DriverResponse(driver.getId(), driver.getFistName(), driver.getLastName());
+            return new DriverResponse(driver.getId(), driver.getFistName(), driver.getLastName(), driver.getSalary());
         }).toList();
         return new ResponseEntity<>(driversResponse, HttpStatus.OK);
     }
@@ -57,12 +57,12 @@ public class DriverController {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
 
-            var update = new Driver(request.firstName(), request.lastName());
+            var update = new Driver(request.firstName(), request.lastName(), request.salary());
             update.setCompany(companyOpt.get());
             var driver = driverRepository.save(update);
 
             var response = new DriverResponse(driver.getId(), driver.getFistName(),
-                    driver.getLastName());
+                    driver.getLastName(), driver.getSalary());
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -82,6 +82,7 @@ public class DriverController {
                     driver.getId(),
                     driver.getFistName(),
                     driver.getLastName(),
+                    driver.getSalary(),
                     new CompanyResponse(company.getId(), company.getName()),
                     driver.getQualifications().stream().map(qualification -> {
                         return new QualificationResponse(qualification.getId(), qualification.getType());
@@ -104,12 +105,14 @@ public class DriverController {
             var driver = driverOpt.get();
             driver.setFirstName(request.firstName());
             driver.setLastName(request.lastName());
+            driver.setSalary(request.salary());
             var updated = driverRepository.save(driver);
             var company = updated.getCompany();
             var response = new DriverDetailedResponse(
                     updated.getId(),
                     updated.getFistName(),
                     updated.getLastName(),
+                    updated.getSalary(),
                     new CompanyResponse(company.getId(), company.getName()),
                     driver.getQualifications().stream().map(qualification -> {
                         return new QualificationResponse(qualification.getId(), qualification.getType());

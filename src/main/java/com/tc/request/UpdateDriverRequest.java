@@ -1,4 +1,6 @@
 package com.tc.request;
 
-public record UpdateDriverRequest(String firstName, String lastName) {
+import java.math.BigDecimal;
+
+public record UpdateDriverRequest(String firstName, String lastName, BigDecimal salary) {
 }

@@ -23,7 +23,8 @@ curl -X 'POST' \
   -H 'Content-Type: application/json' \
   -d '{
   "firstName": "John",
-  "lastName": "Doe"
+  "lastName": "Doe",
+  "salary": "2000"
 }'
 
 curl -X 'POST' \
