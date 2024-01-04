@@ -19,6 +19,7 @@ import com.tc.request.UpdateDriverRequest;
 import com.tc.response.CompanyResponse;
 import com.tc.response.DriverDetailedResponse;
 import com.tc.response.DriverResponse;
+import com.tc.response.QualificationResponse;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -81,7 +82,11 @@ public class DriverController {
                     driver.getId(),
                     driver.getFistName(),
                     driver.getLastName(),
-                    new CompanyResponse(company.getId(), company.getName()));
+                    new CompanyResponse(company.getId(), company.getName()),
+                    driver.getQualifications().stream().map(qualification -> {
+                        return new QualificationResponse(qualification.getId(), qualification.getType());
+                    }).toList());
+
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -105,7 +110,10 @@ public class DriverController {
                     updated.getId(),
                     updated.getFistName(),
                     updated.getLastName(),
-                    new CompanyResponse(company.getId(), company.getName()));
+                    new CompanyResponse(company.getId(), company.getName()),
+                    driver.getQualifications().stream().map(qualification -> {
+                        return new QualificationResponse(qualification.getId(), qualification.getType());
+                    }).toList());
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);

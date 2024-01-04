@@ -1,4 +1,6 @@
 package com.tc.response;
 
-public record DriverDetailedResponse(Long id, String firstName, String lastName, CompanyResponse company) {
+import java.util.List;
+
+public record DriverDetailedResponse(Long id, String firstName, String lastName, CompanyResponse company, List<QualificationResponse> qualifications) {
 }
