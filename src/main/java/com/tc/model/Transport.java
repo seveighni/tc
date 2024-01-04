@@ -27,7 +27,7 @@ public abstract class Transport {
     private LocalDate endDate;
 
     private BigDecimal price;
-    private Boolean isPayed;
+    private Boolean isPaid;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "company_id", nullable = false)
@@ -46,14 +46,14 @@ public abstract class Transport {
     }
 
     public Transport(String startAddress, String endAddress, LocalDate startDate, LocalDate endDate,
-            BigDecimal price, Boolean isPayed) {
+            BigDecimal price, Boolean isPaid) {
         this.startAddress = startAddress;
         this.endAddress = endAddress;
         this.startDate = startDate;
         this.endDate = endDate;
 
         this.price = price;
-        this.isPayed = isPayed;
+        this.isPaid = isPaid;
     }
 
     public Long getId() {
@@ -104,12 +104,12 @@ public abstract class Transport {
         this.price = price;
     }
 
-    public Boolean getIsPayed() {
-        return this.isPayed;
+    public Boolean getIsPaid() {
+        return this.isPaid;
     }
 
-    public void setIsPayed(Boolean isPayed) {
-        this.isPayed = isPayed;
+    public void setIsPaid(Boolean isPaid) {
+        this.isPaid = isPaid;
     }
 
     public Company getCompany() {

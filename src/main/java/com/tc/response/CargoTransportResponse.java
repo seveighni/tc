@@ -12,7 +12,7 @@ public record CargoTransportResponse (
     String cargoType,
     Integer cargoWeight,
     BigDecimal price,
-    Boolean isPayed,
+    Boolean isPaid,
     Long customerId,
     Long vehicleId,
     Long driverId

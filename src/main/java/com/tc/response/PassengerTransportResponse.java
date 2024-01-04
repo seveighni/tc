@@ -11,7 +11,7 @@ public record PassengerTransportResponse(
         LocalDate endDate,
         Integer numberOfPassengers,
         BigDecimal price,
-        Boolean isPayed,
+        Boolean isPaid,
         Long customerId,
         Long vehicleId,
         Long driverId) {

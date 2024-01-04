@@ -3,50 +3,47 @@ package com.tc.controller;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.tc.model.CargoTransport;
-import com.tc.model.PassengerTransport;
 import com.tc.repository.CompanyRepository;
 import com.tc.repository.CustomerRepository;
 import com.tc.repository.DriverRepository;
-import com.tc.repository.TransportRepository;
+import com.tc.repository.PassengerTransportRepository;
+import com.tc.repository.CargoTransportRepository;
 import com.tc.repository.VehicleRepository;
 import com.tc.request.CreateCargoTransportRequest;
-import com.tc.request.CreatePassengerTransportRequest;
+import com.tc.request.UpdateCargoTransportRequest;
 import com.tc.response.CargoTransportResponse;
-import com.tc.response.PassengerTransportResponse;
-
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-@Tag(name = "Transport")
+@Tag(name = "CargoTransport")
 @RestController
 @RequestMapping("/api")
-public class TransportController {
+public class CargoTransportController {
     private final CompanyRepository companyRepository;
     private final DriverRepository driverRepository;
     private final CustomerRepository customerRepository;
     private final VehicleRepository vehicleRepository;
-    private final TransportRepository<CargoTransport> cargoTransportRepository;
-    private final TransportRepository<PassengerTransport> passengerTransportRepository;
+    private final CargoTransportRepository cargoTransportRepository;
 
-    public TransportController(CompanyRepository companyRepository,
+    public CargoTransportController(CompanyRepository companyRepository,
             DriverRepository driverRepository,
             CustomerRepository customerRepository,
             VehicleRepository vehicleRepository,
-            TransportRepository<CargoTransport> cargoTransportRepository,
-            TransportRepository<PassengerTransport> passengerTransportRepository) {
+            CargoTransportRepository cargoTransportRepository,
+            PassengerTransportRepository passengerTransportRepository) {
         this.companyRepository = companyRepository;
         this.driverRepository = driverRepository;
         this.customerRepository = customerRepository;
         this.vehicleRepository = vehicleRepository;
         this.cargoTransportRepository = cargoTransportRepository;
-        this.passengerTransportRepository = passengerTransportRepository;
     }
 
     @GetMapping("/companies/{companyId}/cargotransport")
@@ -67,7 +64,7 @@ public class TransportController {
                     transport.getCargoType(),
                     transport.getCargoWeight(),
                     transport.getPrice(),
-                    transport.getIsPayed(),
+                    transport.getIsPaid(),
                     transport.getCustomer().getId(),
                     transport.getVehicle().getId(),
                     transport.getDriver().getId());
@@ -130,7 +127,7 @@ public class TransportController {
                     saved.getCargoType(),
                     saved.getCargoWeight(),
                     saved.getPrice(),
-                    saved.getIsPayed(),
+                    saved.getIsPaid(),
                     saved.getCustomer().getId(),
                     saved.getVehicle().getId(),
                     saved.getDriver().getId());
@@ -140,37 +137,45 @@ public class TransportController {
         }
     }
 
-    @GetMapping("/companies/{companyId}/passengertransport")
-    public ResponseEntity<List<PassengerTransportResponse>> getPassengerTransportByCompanyId(
-            @PathVariable("companyId") Long companyId) {
-        var company = companyRepository.findById(companyId);
-        if (!company.isPresent()) {
+    @GetMapping("/cargotransport/{id}")
+    public ResponseEntity<CargoTransportResponse> getCargoTransportById(@PathVariable("id") Long id) {
+        var cargoTransportOpt = cargoTransportRepository.findById(id);
+        if (!cargoTransportOpt.isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        var passengerTransport = passengerTransportRepository.findByCompanyId(companyId);
-        var passengerTransportResponse = passengerTransport.stream().map(transport -> {
-            return new PassengerTransportResponse(
-                    transport.getId(),
-                    transport.getStartAddress(),
-                    transport.getEndAddress(),
-                    transport.getStartDate(),
-                    transport.getEndDate(),
-                    transport.getNumberOfPassengers(),
-                    transport.getPrice(),
-                    transport.getIsPayed(),
-                    transport.getCustomer().getId(),
-                    transport.getVehicle().getId(),
-                    transport.getDriver().getId());
-        }).toList();
-        return new ResponseEntity<>(passengerTransportResponse, HttpStatus.OK);
+        var cargoTransport = cargoTransportOpt.get();
+        var response = new CargoTransportResponse(
+                cargoTransport.getId(),
+                cargoTransport.getStartAddress(),
+                cargoTransport.getEndAddress(),
+                cargoTransport.getStartDate(),
+                cargoTransport.getEndDate(),
+                cargoTransport.getCargoType(),
+                cargoTransport.getCargoWeight(),
+                cargoTransport.getPrice(),
+                cargoTransport.getIsPaid(),
+                cargoTransport.getCustomer().getId(),
+                cargoTransport.getVehicle().getId(),
+                cargoTransport.getDriver().getId());
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @PostMapping("/companies/{companyId}/passengertransport")
-    public ResponseEntity<PassengerTransportResponse> createPassengerTransport(
-            @PathVariable("companyId") Long companyId,
-            @RequestBody CreatePassengerTransportRequest request) {
+    @DeleteMapping("/cargotransport/{id}")
+    public ResponseEntity<HttpStatus> deleteCargoTransport(@PathVariable("id") Long id) {
+        cargoTransportRepository.deleteById(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("/cargotransport/{id}")
+    public ResponseEntity<CargoTransportResponse> updateCargoTransport(@PathVariable("id") Long id,
+            @RequestBody UpdateCargoTransportRequest request) {
         try {
-            var companyOpt = companyRepository.findById(companyId);
+            var cargoTransportOpt = cargoTransportRepository.findById(id);
+            if (!cargoTransportOpt.isPresent()) {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+            var cargoTransport = cargoTransportOpt.get();
+            var companyOpt = companyRepository.findById(cargoTransport.getCompany().getId());
             if (!companyOpt.isPresent()) {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
@@ -193,35 +198,41 @@ public class TransportController {
             if (!vehicleOpt.isPresent()) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
-            var passengerTransport = new PassengerTransport(
+
+            var update = new CargoTransport(
                     request.startAddress(),
                     request.endAddress(),
                     request.startDate(),
                     request.endDate(),
-                    request.numberOfPassengers(),
+                    request.cargoType(),
+                    request.cargoWeight(),
                     request.price(),
-                    false);
+                    request.isPaid());
+
             var customer = customerOpt.get();
             var vehicle = vehicleOpt.get();
             var driver = driverOpt.get();
-            passengerTransport.setCompany(company);
-            passengerTransport.setCustomer(customer);
-            passengerTransport.setDriver(driver);
-            passengerTransport.setVehicle(vehicle);
-            var saved = this.passengerTransportRepository.save(passengerTransport);
-            var response = new PassengerTransportResponse(
-                    saved.getId(),
-                    saved.getStartAddress(),
-                    saved.getEndAddress(),
-                    saved.getStartDate(),
-                    saved.getEndDate(),
-                    saved.getNumberOfPassengers(),
-                    saved.getPrice(),
-                    saved.getIsPayed(),
-                    saved.getCustomer().getId(),
-                    saved.getVehicle().getId(),
-                    saved.getDriver().getId());
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
+            update.setId(id);
+            update.setCompany(company);
+            update.setCustomer(customer);
+            update.setDriver(driver);
+            update.setVehicle(vehicle);
+
+            var updated = cargoTransportRepository.save(update);
+            var response = new CargoTransportResponse(
+                    updated.getId(),
+                    updated.getStartAddress(),
+                    updated.getEndAddress(),
+                    updated.getStartDate(),
+                    updated.getEndDate(),
+                    updated.getCargoType(),
+                    updated.getCargoWeight(),
+                    updated.getPrice(),
+                    updated.getIsPaid(),
+                    updated.getCustomer().getId(),
+                    updated.getVehicle().getId(),
+                    updated.getDriver().getId());
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }

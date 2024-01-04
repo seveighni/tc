@@ -14,8 +14,8 @@ public class PassengerTransport extends Transport {
     }
 
     public PassengerTransport(String startAddress, String endAddress, LocalDate startDate, LocalDate endDate,
-            Integer numberOfPassengers, BigDecimal price, Boolean isPayed) {
-        super(startAddress, endAddress, startDate, endDate, price, isPayed);
+            Integer numberOfPassengers, BigDecimal price, Boolean isPaid) {
+        super(startAddress, endAddress, startDate, endDate, price, isPaid);
         this.numberOfPassengers = numberOfPassengers;
     }
 

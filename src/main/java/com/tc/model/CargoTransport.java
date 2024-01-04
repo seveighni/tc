@@ -15,8 +15,8 @@ public class CargoTransport extends Transport {
     }
 
     public CargoTransport(String startAddress, String endAddress, LocalDate startDate, LocalDate endDate,
-            String cargoType, Integer cargoWeight, BigDecimal price, Boolean isPayed) {
-        super(startAddress, endAddress, startDate, endDate, price, isPayed);
+            String cargoType, Integer cargoWeight, BigDecimal price, Boolean isPaid) {
+        super(startAddress, endAddress, startDate, endDate, price, isPaid);
         this.cargoType = cargoType;
         this.cargoWeight = cargoWeight;
     }
