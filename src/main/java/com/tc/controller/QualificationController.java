@@ -2,6 +2,7 @@ package com.tc.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Example;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -81,12 +82,12 @@ public class QualificationController {
             }
 
             var driver = driverOpt.get();
-            var qualificationId = request.id();
-            if (qualificationId != null && qualificationId != 0) {
-                var qualificationOpt = qualificationRepository.findById(qualificationId);
-                if (!qualificationOpt.isPresent()) {
-                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-                }
+            var qualificationType = request.type();
+            Qualification exQualification = new Qualification(qualificationType);
+            Example<Qualification> example = Example.of(exQualification);
+
+            var qualificationOpt = qualificationRepository.findOne(example);
+            if (qualificationOpt.isPresent()) {
                 var qualification = qualificationOpt.get();
                 driver.addQualification(qualification);
                 driverRepository.save(driver);
@@ -94,7 +95,7 @@ public class QualificationController {
                 return new ResponseEntity<>(response, HttpStatus.CREATED);
             }
 
-            var qualification = new Qualification(request.type());
+            var qualification = new Qualification(qualificationType);
             driver.addQualification(qualification);
             qualificationRepository.save(qualification);
             var response = new QualificationResponse(qualification.getId(), qualification.getType());
