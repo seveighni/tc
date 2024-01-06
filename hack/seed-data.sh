@@ -88,10 +88,26 @@ curl -X 'POST' \
   -d '{
   "startAddress": "Street 1",
   "endAddress": "Street 2",
-  "startDate": "2024-01-05",
-  "endDate": "2024-01-12",
+  "startDate": "2023-01-05",
+  "endDate": "2023-01-12",
   "numberOfPassengers": 10,
   "price": 120,
+  "customerId": 1,
+  "vehicleId": 1,
+  "driverId": 1
+}'
+
+curl -X 'POST' \
+  'http://localhost:8080/api/companies/1/passengertransport' \
+  -H 'accept: */*' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "startAddress": "Street 1",
+  "endAddress": "Street 2",
+  "startDate": "2023-02-05",
+  "endDate": "2023-02-11",
+  "numberOfPassengers": 10,
+  "price": 100,
   "customerId": 1,
   "vehicleId": 1,
   "driverId": 1
@@ -120,3 +136,20 @@ curl -X 'POST' \
   -d '{
   "type": "people transport"
 }'
+
+curl -X 'PUT' \
+  'http://localhost:8080/api/passengertransport/1' \
+  -H 'accept: */*' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "startAddress": "Street 1",
+    "endAddress": "Street 2",
+    "startDate": "2023-01-05",
+    "endDate": "2023-01-12",
+    "numberOfPassengers": 10,
+    "price": 120,
+    "isPaid": true,
+    "customerId": 1,
+    "vehicleId": 1,
+    "driverId": 1
+  }'

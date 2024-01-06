@@ -17,9 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.tc.model.Company;
 import com.tc.model.Driver;
-import com.tc.model.Qualification;
 import com.tc.repository.CompanyRepository;
 import com.tc.repository.DriverRepository;
 import com.tc.request.CreateDriverRequest;
@@ -33,8 +31,6 @@ import com.tc.specification.Common;
 import com.tc.specification.DriverSpecification;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.Predicate;
 
 @Tag(name = "Driver")
 @RestController

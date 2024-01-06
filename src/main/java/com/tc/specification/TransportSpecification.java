@@ -1,5 +1,7 @@
 package com.tc.specification;
 
+import java.time.LocalDate;
+
 import org.springframework.data.jpa.domain.Specification;
 
 import jakarta.persistence.criteria.Path;
@@ -15,6 +17,12 @@ public class TransportSpecification {
         return (root, query, cb) -> {
             Path<T> transport = root.get("company");
             return transport.get("id").in(companyId);
+        };
+    }
+
+    public static <T> Specification<T> endDateInRange(LocalDate startDate, LocalDate endDate) {
+        return (root, query, cb) -> {
+            return cb.between(root.get("endDate"), startDate, endDate);
         };
     }
 }
