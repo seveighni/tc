@@ -1,6 +1,9 @@
 package com.tc.controller;
 
 import java.util.List;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -10,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.tc.model.PassengerTransport;
@@ -22,6 +26,7 @@ import com.tc.repository.VehicleRepository;
 import com.tc.request.CreatePassengerTransportRequest;
 import com.tc.request.UpdatePassengerTransportRequest;
 import com.tc.response.PassengerTransportResponse;
+import com.tc.specification.TransportSpecification;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -52,12 +57,20 @@ public class PassengerTransportController {
 
     @GetMapping("/companies/{companyId}/passengertransport")
     public ResponseEntity<List<PassengerTransportResponse>> getPassengerTransportByCompanyId(
-            @PathVariable("companyId") Long companyId) {
+            @PathVariable("companyId") Long companyId,
+            @RequestParam(required = false) String destination,
+            @RequestParam(defaultValue = "0") int page) {
         var company = companyRepository.findById(companyId);
         if (!company.isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        var passengerTransport = passengerTransportRepository.findByCompanyId(companyId);
+
+        Specification<PassengerTransport> hasCompanyId = TransportSpecification.hasCompanyId(companyId);
+        Specification<PassengerTransport> filters = Specification
+                .where(hasCompanyId)
+                .and(destination == null ? null : TransportSpecification.hasDestination(destination));
+
+        var passengerTransport = passengerTransportRepository.findAll(filters, PageRequest.of(page, 20));
         var passengerTransportResponse = passengerTransport.stream().map(transport -> {
             return new PassengerTransportResponse(
                     transport.getId(),
@@ -137,26 +150,6 @@ public class PassengerTransportController {
         }
     }
 
-    @GetMapping("/passengertransport")
-    public ResponseEntity<List<PassengerTransportResponse>> getAllPassengerTransport() {
-        var passengerTransport = passengerTransportRepository.findAll();
-        var passengerTransportResponse = passengerTransport.stream().map(transport -> {
-            return new PassengerTransportResponse(
-                    transport.getId(),
-                    transport.getStartAddress(),
-                    transport.getEndAddress(),
-                    transport.getStartDate(),
-                    transport.getEndDate(),
-                    transport.getNumberOfPassengers(),
-                    transport.getPrice(),
-                    transport.getIsPaid(),
-                    transport.getCustomer().getId(),
-                    transport.getVehicle().getId(),
-                    transport.getDriver().getId());
-        }).toList();
-        return new ResponseEntity<>(passengerTransportResponse, HttpStatus.OK);
-    }
-
     @GetMapping("/passengertransport/{id}")
     public ResponseEntity<PassengerTransportResponse> getPassengerTransportById(@PathVariable("id") Long id) {
         var passengerTransportOpt = passengerTransportRepository.findById(id);
@@ -216,7 +209,7 @@ public class PassengerTransportController {
                     .filter(vehicle -> vehicle.getId() == request.vehicleId()).findFirst();
             if (!vehicleOpt.isPresent()) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            } 
+            }
 
             var update = new PassengerTransport(
                     request.startAddress(),

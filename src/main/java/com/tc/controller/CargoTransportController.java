@@ -1,6 +1,9 @@
 package com.tc.controller;
 
 import java.util.List;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -10,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.tc.model.CargoTransport;
 import com.tc.repository.CompanyRepository;
@@ -21,6 +25,8 @@ import com.tc.repository.VehicleRepository;
 import com.tc.request.CreateCargoTransportRequest;
 import com.tc.request.UpdateCargoTransportRequest;
 import com.tc.response.CargoTransportResponse;
+import com.tc.specification.TransportSpecification;
+
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "CargoTransport")
@@ -48,12 +54,19 @@ public class CargoTransportController {
 
     @GetMapping("/companies/{companyId}/cargotransport")
     public ResponseEntity<List<CargoTransportResponse>> getCargoTransportByCompanyId(
-            @PathVariable("companyId") Long companyId) {
+            @PathVariable("companyId") Long companyId,
+            @RequestParam(required = false) String destination,
+            @RequestParam(defaultValue = "0") int page) {
         var company = companyRepository.findById(companyId);
         if (!company.isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        var cargoTransport = cargoTransportRepository.findByCompanyId(companyId);
+
+        Specification<CargoTransport> hasCompanyId = TransportSpecification.hasCompanyId(companyId);
+        Specification<CargoTransport> filters = Specification
+                .where(hasCompanyId)
+                .and(destination == null ? null : TransportSpecification.hasDestination(destination));
+        var cargoTransport = cargoTransportRepository.findAll(filters, PageRequest.of(page, 20));
         var cargoTransportResponse = cargoTransport.stream().map(transport -> {
             return new CargoTransportResponse(
                     transport.getId(),
@@ -135,27 +148,6 @@ public class CargoTransportController {
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    @GetMapping("/cargotransport")
-    public ResponseEntity<List<CargoTransportResponse>> getAllCargoTransport() {
-        var cargoTransport = cargoTransportRepository.findAll();
-        var cargoTransportResponse = cargoTransport.stream().map(transport -> {
-            return new CargoTransportResponse(
-                    transport.getId(),
-                    transport.getStartAddress(),
-                    transport.getEndAddress(),
-                    transport.getStartDate(),
-                    transport.getEndDate(),
-                    transport.getCargoType(),
-                    transport.getCargoWeight(),
-                    transport.getPrice(),
-                    transport.getIsPaid(),
-                    transport.getCustomer().getId(),
-                    transport.getVehicle().getId(),
-                    transport.getDriver().getId());
-        }).toList();
-        return new ResponseEntity<>(cargoTransportResponse, HttpStatus.OK);
     }
 
     @GetMapping("/cargotransport/{id}")
