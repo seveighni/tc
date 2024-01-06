@@ -3,6 +3,7 @@ package com.tc.controller;
 import java.util.List;
 
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,9 +22,9 @@ import com.tc.repository.DriverRepository;
 import com.tc.request.CreateCompanyRequest;
 import com.tc.request.UpdateCompanyRequest;
 import com.tc.response.CompanyResponse;
+import com.tc.specification.Common;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.persistence.criteria.Predicate;
 
 @Tag(name = "Company")
 @RestController
@@ -41,36 +42,11 @@ public class CompanyController {
             @RequestParam(defaultValue = "0") int page) {
         try {
 
-            Specification<Company> filter = Specification.where((root, query, cb) -> {
-                Predicate predicate = null;
-                if (filterBy != null) {
-                    var filters = filterBy.split(",");
-                    for (var f : filters) {
-                        var split = f.split("=");
-                        var prop = split[0];
-                        var val = split[1];
-                        predicate = cb.like(cb.upper(root.get(prop)), "%" + val.toUpperCase() + "%");
-                    }
-                }
+          
+            Specification<Company> filter = Common.likeFilter(filterBy);
 
-                if (sortBy != null) {
-                    var sort = sortBy.split(",");
-                    for (var s : sort) {
-                        var split = s.split("=");
-                        var prop = split[0];
-                        var val = split[1];
-                        if (val.equals("asc")) {
-                            query.orderBy(cb.asc(root.get(prop)));
-                        } else if (val.equals("desc")){
-                            query.orderBy(cb.desc(root.get(prop)));
-                        }
-                    }
-                }
-
-                return predicate;
-            });
-
-            var companies = companyRepository.findAll(filter, PageRequest.of(page, 20));
+            Sort sort = sortBy == null ? Sort.unsorted() : Common.sortBy(sortBy);
+            var companies = companyRepository.findAll(filter, PageRequest.of(page, 20, sort));
             var response = companies.map(company -> new CompanyResponse(
                     company.getId(),
                     company.getName()));

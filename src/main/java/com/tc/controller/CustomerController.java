@@ -80,7 +80,7 @@ public class CustomerController {
             var company = companyOpt.get();
             var customerId = request.id();
             // customer already exists
-            if (customerId != 0) {
+            if (customerId != null && customerId != 0) {
                 var customerOpt = customerRepository.findById(customerId);
                 if (!customerOpt.isPresent()) {
                     return new ResponseEntity<>(HttpStatus.NOT_FOUND);

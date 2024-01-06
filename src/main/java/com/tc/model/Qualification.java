@@ -16,7 +16,7 @@ import jakarta.persistence.ManyToMany;
 public class Qualification {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
     @Column(unique = true)

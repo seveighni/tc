@@ -17,7 +17,7 @@ import jakarta.persistence.ManyToOne;
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 public abstract class Transport {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
     private String startAddress;

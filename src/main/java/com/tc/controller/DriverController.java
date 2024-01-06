@@ -1,6 +1,10 @@
 package com.tc.controller;
 
 import java.util.List;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -10,8 +14,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.tc.model.Company;
 import com.tc.model.Driver;
+import com.tc.model.Qualification;
 import com.tc.repository.CompanyRepository;
 import com.tc.repository.DriverRepository;
 import com.tc.request.CreateDriverRequest;
@@ -19,9 +27,14 @@ import com.tc.request.UpdateDriverRequest;
 import com.tc.response.CompanyResponse;
 import com.tc.response.DriverDetailedResponse;
 import com.tc.response.DriverResponse;
+import com.tc.response.DriverScopedResponse;
 import com.tc.response.QualificationResponse;
+import com.tc.specification.Common;
+import com.tc.specification.DriverSpecification;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Predicate;
 
 @Tag(name = "Driver")
 @RestController
@@ -36,14 +49,24 @@ public class DriverController {
     }
 
     @GetMapping("/companies/{companyId}/drivers")
-    public ResponseEntity<List<DriverResponse>> getDriversByCompanyId(@PathVariable("companyId") Long companyId) {
+    public ResponseEntity<List<DriverScopedResponse>> getDriversByCompanyId(@PathVariable("companyId") Long companyId,
+            @RequestParam(required = false) String qualification,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(defaultValue = "0") int page) {
         var company = companyRepository.findById(companyId);
         if (!company.isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        List<Driver> drivers = driverRepository.findByCompanyId(companyId);
+
+        Specification<Driver> filters = Specification
+                .where(qualification == null ? null : DriverSpecification.hasQualification(qualification));
+        Sort sort = sortBy == null ? Sort.unsorted() : Common.sortBy(sortBy);
+        var drivers = driverRepository.findAll(filters, PageRequest.of(page, 20, sort));
         var driversResponse = drivers.stream().map(driver -> {
-            return new DriverResponse(driver.getId(), driver.getFistName(), driver.getLastName(), driver.getSalary());
+            return new DriverScopedResponse(driver.getId(), driver.getFistName(), driver.getLastName(),
+                    driver.getSalary(), driver.getQualifications().stream().map(q -> {
+                        return new QualificationResponse(q.getId(), q.getType());
+                    }).toList());
         }).toList();
         return new ResponseEntity<>(driversResponse, HttpStatus.OK);
     }

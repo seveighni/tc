@@ -82,7 +82,7 @@ public class QualificationController {
 
             var driver = driverOpt.get();
             var qualificationId = request.id();
-            if (qualificationId != 0) {
+            if (qualificationId != null && qualificationId != 0) {
                 var qualificationOpt = qualificationRepository.findById(qualificationId);
                 if (!qualificationOpt.isPresent()) {
                     return new ResponseEntity<>(HttpStatus.NOT_FOUND);

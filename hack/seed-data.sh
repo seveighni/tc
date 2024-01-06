@@ -52,6 +52,26 @@ curl -X 'POST' \
 }'
 
 curl -X 'POST' \
+  'http://localhost:8080/api/companies/1/drivers' \
+  -H 'accept: */*' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "firstName": "Jane",
+  "lastName": "Austen",
+  "salary": "1000"
+}'
+
+curl -X 'POST' \
+  'http://localhost:8080/api/companies/1/drivers' \
+  -H 'accept: */*' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "firstName": "Bob",
+  "lastName": "Doyle",
+  "salary": "3000"
+}'
+
+curl -X 'POST' \
   'http://localhost:8080/api/companies/1/vehicles' \
   -H 'accept: */*' \
   -H 'Content-Type: application/json' \
@@ -84,4 +104,20 @@ curl -X 'POST' \
   -d '{
   "id": 0,
   "type": "flammable liquids"
+}'
+
+curl -X 'POST' \
+  'http://localhost:8080/api/drivers/2/qualifications' \
+  -H 'accept: */*' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "id": 1
+}'
+
+curl -X 'POST' \
+  'http://localhost:8080/api/drivers/3/qualifications' \
+  -H 'accept: */*' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "type": "people transport"
 }'
