@@ -153,3 +153,38 @@ curl -X 'PUT' \
     "vehicleId": 1,
     "driverId": 1
   }'
+
+curl -X 'POST' \
+  'http://localhost:8080/api/companies/1/cargotransport' \
+  -H 'accept: */*' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "startAddress": "Street 3",
+  "endAddress": "Street 5",
+  "startDate": "2023-06-01",
+  "endDate": "2023-06-07",
+  "cargoType": "Goods",
+  "cargoWeight": 123,
+  "price": 100,
+  "customerId": 1,
+  "vehicleId": 1,
+  "driverId": 2
+}'
+
+curl -X 'PUT' \
+  'http://localhost:8080/api/cargotransport/52' \
+  -H 'accept: */*' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "startAddress": "Street 3",
+  "endAddress": "Street 5",
+  "startDate": "2023-06-01",
+  "endDate": "2023-06-07",
+  "cargoType": "Goods",
+  "cargoWeight": 123,
+  "price": 100,
+  "isPaid": true,
+  "customerId": 1,
+  "vehicleId": 1,
+  "driverId": 2
+}'

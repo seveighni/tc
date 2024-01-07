@@ -6,6 +6,7 @@ import java.util.List;
 public record CompanyReportResponse(
                 Integer totalFinishedPassengerTransports,
                 Integer totalFinishedCargoTransports,
-                BigDecimal totalPaidSum,
-                List<TransportRef> unpaidTransports) {
+                BigDecimal totalRevenue,
+                List<TransportRef> unpaidTransports,
+                List<DriverRef> drivers) {
 }

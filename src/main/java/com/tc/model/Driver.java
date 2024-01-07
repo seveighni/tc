@@ -56,7 +56,7 @@ public class Driver {
         return this.id;
     }
 
-    public String getFistName() {
+    public String getFirstName() {
         return this.firstName;
     }
 

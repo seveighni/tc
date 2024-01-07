@@ -59,7 +59,7 @@ public class DriverController {
         Sort sort = sortBy == null ? Sort.unsorted() : Common.sortBy(sortBy);
         var drivers = driverRepository.findAll(filters, PageRequest.of(page, 20, sort));
         var driversResponse = drivers.stream().map(driver -> {
-            return new DriverScopedResponse(driver.getId(), driver.getFistName(), driver.getLastName(),
+            return new DriverScopedResponse(driver.getId(), driver.getFirstName(), driver.getLastName(),
                     driver.getSalary(), driver.getQualifications().stream().map(q -> {
                         return new QualificationResponse(q.getId(), q.getType());
                     }).toList());
@@ -80,7 +80,7 @@ public class DriverController {
             update.setCompany(companyOpt.get());
             var driver = driverRepository.save(update);
 
-            var response = new DriverResponse(driver.getId(), driver.getFistName(),
+            var response = new DriverResponse(driver.getId(), driver.getFirstName(),
                     driver.getLastName(), driver.getSalary());
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (Exception e) {
@@ -99,7 +99,7 @@ public class DriverController {
             var company = driver.getCompany();
             var response = new DriverDetailedResponse(
                     driver.getId(),
-                    driver.getFistName(),
+                    driver.getFirstName(),
                     driver.getLastName(),
                     driver.getSalary(),
                     new CompanyResponse(company.getId(), company.getName()),
@@ -129,7 +129,7 @@ public class DriverController {
             var company = updated.getCompany();
             var response = new DriverDetailedResponse(
                     updated.getId(),
-                    updated.getFistName(),
+                    updated.getFirstName(),
                     updated.getLastName(),
                     updated.getSalary(),
                     new CompanyResponse(company.getId(), company.getName()),

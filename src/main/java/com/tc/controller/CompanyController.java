@@ -42,7 +42,6 @@ public class CompanyController {
             @RequestParam(defaultValue = "0") int page) {
         try {
 
-          
             Specification<Company> filter = Common.likeFilter(filterBy);
 
             Sort sort = sortBy == null ? Sort.unsorted() : Common.sortBy(sortBy);

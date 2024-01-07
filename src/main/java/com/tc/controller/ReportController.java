@@ -2,6 +2,7 @@ package com.tc.controller;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.springframework.data.jpa.domain.Specification;
@@ -22,8 +23,10 @@ import com.tc.repository.DriverRepository;
 import com.tc.repository.PassengerTransportRepository;
 import com.tc.repository.VehicleRepository;
 import com.tc.response.report.CompanyReportResponse;
+import com.tc.response.report.DriverRef;
 import com.tc.response.report.TransportRef;
 import com.tc.specification.TransportSpecification;
+import com.tc.util.Util;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -31,73 +34,101 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping("/api")
 public class ReportController {
-    private final CompanyRepository companyRepository;
-    private final DriverRepository driverRepository;
-    private final CustomerRepository customerRepository;
-    private final VehicleRepository vehicleRepository;
-    private final CargoTransportRepository cargoTransportRepository;
-    private final PassengerTransportRepository passengerTransportRepository;
+        private final CompanyRepository companyRepository;
+        private final CargoTransportRepository cargoTransportRepository;
+        private final PassengerTransportRepository passengerTransportRepository;
 
-    public ReportController(CompanyRepository companyRepository,
-            DriverRepository driverRepository,
-            CustomerRepository customerRepository,
-            VehicleRepository vehicleRepository,
-            CargoTransportRepository cargoTransportRepository,
-            PassengerTransportRepository passengerTransportRepository) {
-        this.companyRepository = companyRepository;
-        this.driverRepository = driverRepository;
-        this.customerRepository = customerRepository;
-        this.vehicleRepository = vehicleRepository;
-        this.cargoTransportRepository = cargoTransportRepository;
-        this.passengerTransportRepository = passengerTransportRepository;
-    }
-
-    @GetMapping("/report/companies/{companyId}")
-    public ResponseEntity<CompanyReportResponse> getCompanyReport(
-            @PathVariable("companyId") Long companyId,
-            @RequestParam(required = false) LocalDate fromDate,
-            @RequestParam(required = false) LocalDate toDate) {
-        var company = companyRepository.findById(companyId);
-        if (!company.isPresent()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        public ReportController(CompanyRepository companyRepository,
+                        CargoTransportRepository cargoTransportRepository,
+                        PassengerTransportRepository passengerTransportRepository) {
+                this.companyRepository = companyRepository;
+                this.cargoTransportRepository = cargoTransportRepository;
+                this.passengerTransportRepository = passengerTransportRepository;
         }
 
-        var startDate = fromDate == null ? LocalDate.of(1970, 1, 1) : fromDate;
-        var endDate = toDate == null ? LocalDate.now() : toDate;
+        @GetMapping("/report/companies/{companyId}")
+        public ResponseEntity<CompanyReportResponse> getCompanyReport(
+                        @PathVariable("companyId") Long companyId,
+                        @RequestParam(required = false) LocalDate fromDate,
+                        @RequestParam(required = false) LocalDate toDate) {
+                var company = companyRepository.findById(companyId);
+                if (!company.isPresent()) {
+                        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                }
 
-        Specification<PassengerTransport> specPassengerInDateRange = TransportSpecification.endDateInRange(startDate,
-                endDate);
-        Specification<PassengerTransport> specPassengerHasCompanyId = TransportSpecification.hasCompanyId(companyId);
-        var passengerTransports = passengerTransportRepository.findAll(Specification
-                .where(specPassengerInDateRange)
-                .and(specPassengerHasCompanyId));
+                var startDate = fromDate == null ? LocalDate.of(1970, 1, 1) : fromDate;
+                var endDate = toDate == null ? LocalDate.now() : toDate;
 
-        Specification<CargoTransport> specCargoInDateRange = TransportSpecification.endDateInRange(startDate,
-                endDate);
-        Specification<CargoTransport> specCargoHasCompanyId = TransportSpecification.hasCompanyId(companyId);
-        var cargoTransports = cargoTransportRepository.findAll(Specification
-                .where(specCargoInDateRange)
-                .and(specCargoHasCompanyId));
+                Specification<PassengerTransport> specPassengerInDateRange = TransportSpecification.endDateInRange(
+                                startDate,
+                                endDate);
+                Specification<PassengerTransport> specPassengerHasCompanyId = TransportSpecification
+                                .hasCompanyId(companyId);
+                var passengerTransports = passengerTransportRepository.findAll(Specification
+                                .where(specPassengerInDateRange)
+                                .and(specPassengerHasCompanyId));
 
-        var unpaidTransports = Stream
-                .concat(passengerTransports.stream().filter(transport -> !transport.getIsPaid()).map(transport -> {
-                    return new TransportRef(transport.getId(), "passenger");
-                }), cargoTransports.stream().filter(transport -> !transport.getIsPaid()).map(transport -> {
-                    return new TransportRef(transport.getId(), "cargo");
-                })).toList();
+                Specification<CargoTransport> specCargoInDateRange = TransportSpecification.endDateInRange(startDate,
+                                endDate);
+                Specification<CargoTransport> specCargoHasCompanyId = TransportSpecification.hasCompanyId(companyId);
+                var cargoTransports = cargoTransportRepository.findAll(Specification
+                                .where(specCargoInDateRange)
+                                .and(specCargoHasCompanyId));
 
-        var totalPaidSum = Stream.concat(passengerTransports.stream().filter(transport -> transport.getIsPaid())
-                .map(transport -> transport.getPrice()),
-                cargoTransports.stream().filter(transport -> transport.getIsPaid())
-                        .map(transport -> transport.getPrice()))
-                .reduce(BigDecimal.ZERO,
-                        BigDecimal::add);
+                var unpaidTransports = Stream
+                                .concat(passengerTransports.stream().filter(transport -> !transport.getIsPaid())
+                                                .map(transport -> {
+                                                        return new TransportRef(transport.getId(), "passenger");
+                                                }), cargoTransports.stream().filter(transport -> !transport.getIsPaid())
+                                                                .map(transport -> {
+                                                                        return new TransportRef(transport.getId(),
+                                                                                        "cargo");
+                                                                }))
+                                .toList();
 
-        var response = new CompanyReportResponse(
-                passengerTransports.size(),
-                cargoTransports.size(),
-                totalPaidSum,
-                unpaidTransports);
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
+                var totalRevenue = Stream.concat(passengerTransports.stream().filter(transport -> transport.getIsPaid())
+                                .map(transport -> transport.getPrice()),
+                                cargoTransports.stream().filter(transport -> transport.getIsPaid())
+                                                .map(transport -> transport.getPrice()))
+                                .reduce(BigDecimal.ZERO,
+                                                BigDecimal::add);
+
+                var drivers = Stream.concat(passengerTransports.stream().map(transport -> transport.getDriver()),
+                                cargoTransports.stream().map(transport -> transport.getDriver()))
+                                .filter(Util.distinctByKey(d -> d.getId())).toList();
+
+                List<DriverRef> driversReport = drivers.stream().map(driver -> {
+                        var completedPassengerTransports = passengerTransports.stream()
+                                        .filter(transport -> transport.getDriver().getId().equals(
+                                                        driver.getId()))
+                                        .count();
+                        var completedCargoTransports = cargoTransports.stream()
+                                        .filter(transport -> transport.getDriver().getId().equals(driver.getId()))
+                                        .count();
+
+                        var generatedRevenue = Stream.concat(
+                                        passengerTransports.stream()
+                                                        .filter(transport -> transport.getDriver().getId().equals(
+                                                                        driver.getId()) && transport.getIsPaid())
+                                                        .map(transport -> transport.getPrice()),
+                                        cargoTransports.stream()
+                                                        .filter(transport -> transport.getDriver()
+                                                                        .getId().equals(driver.getId())
+                                                                        && transport.getIsPaid())
+                                                        .map(transport -> transport.getPrice()))
+                                        .reduce(BigDecimal.ZERO,
+                                                        BigDecimal::add);
+                        return new DriverRef(driver.getId(), driver.getFirstName(), driver.getLastName(),
+                                        completedPassengerTransports + completedCargoTransports,
+                                        generatedRevenue);
+                }).toList();
+
+                var response = new CompanyReportResponse(
+                                passengerTransports.size(),
+                                cargoTransports.size(),
+                                totalRevenue,
+                                unpaidTransports,
+                                driversReport);
+                return new ResponseEntity<>(response, HttpStatus.OK);
+        }
 }
