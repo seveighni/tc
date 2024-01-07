@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.tc.exception.BadRequestException;
+import com.tc.exception.NotFoundException;
 import com.tc.model.Customer;
 import com.tc.repository.CompanyRepository;
 import com.tc.repository.CustomerRepository;
@@ -39,11 +41,8 @@ public class CustomerController {
 
     @GetMapping("/companies/{companyId}/customers")
     public ResponseEntity<List<CustomerResponse>> getCustomersByCompanyId(@PathVariable("companyId") Long companyId) {
-        var company = companyRepository.findById(companyId);
-        if (!company.isPresent()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        var customers = customerRepository.findCustomersByCompaniesId(companyId);
+        var company = companyRepository.findById(companyId).orElseThrow(() -> new NotFoundException("company not found"));
+        var customers = customerRepository.findCustomersByCompaniesId(company.getId());
         var customersResponse = customers.stream().map(customer -> {
             return new CustomerResponse(customer.getId(), customer.getName());
         }).toList();
@@ -53,12 +52,7 @@ public class CustomerController {
     @GetMapping("/customers/{id}")
     public ResponseEntity<CustomerDetailedResponse> getCustomerById(@PathVariable("id") Long id) {
         try {
-            var customerOpt = customerRepository.findById(id);
-
-            if (!customerOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-            var customer = customerOpt.get();
+            var customer = customerRepository.findById(id).orElseThrow(() -> new NotFoundException("customer not found"));
             var companies = customer.getCompanies();
             var response = new CustomerDetailedResponse(customer.getId(), customer.getName(),
                     companies.stream().map(company -> {
@@ -74,19 +68,11 @@ public class CustomerController {
     public ResponseEntity<CustomerResponse> addCustomerToCompany(@PathVariable("companyId") Long companyId,
             @RequestBody @Valid CreateCustomerRequest request) {
         try {
-            var companyOpt = companyRepository.findById(companyId);
-            if (!companyOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-            var company = companyOpt.get();
+            var company = companyRepository.findById(companyId).orElseThrow(() -> new NotFoundException("company not found"));
             var customerId = request.id;
             // customer already exists
             if (customerId != null && customerId != 0) {
-                var customerOpt = customerRepository.findById(customerId);
-                if (!customerOpt.isPresent()) {
-                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-                }
-                var customer = customerOpt.get();
+                var customer = customerRepository.findById(customerId).orElseThrow(() -> new NotFoundException("customer not found"));
                 company.addCustomer(customer);
                 companyRepository.save(company);
 
@@ -109,12 +95,7 @@ public class CustomerController {
     public ResponseEntity<CustomerDetailedResponse> updateCustomer(@PathVariable("id") Long id,
             @RequestBody @Valid UpdateCustomerRequest request) {
         try {
-            var customerOpt = customerRepository.findById(id);
-
-            if (!customerOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-            var customer = customerOpt.get();
+            var customer = customerRepository.findById(id).orElseThrow(() -> new NotFoundException("customer not found"));
             customer.setName(request.name);
             var updated = customerRepository.save(customer);
             var response = new CustomerDetailedResponse(updated.getId(), updated.getName(),
@@ -131,7 +112,7 @@ public class CustomerController {
     public ResponseEntity<HttpStatus> deleteCustomer(@PathVariable("id") Long id) {
         var companies = companyRepository.findCompaniesByCustomersId(id);
         if (!companies.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            throw new BadRequestException("customer is still associated with companies");
         }
         customerRepository.deleteById(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -140,12 +121,7 @@ public class CustomerController {
     @DeleteMapping("/companies/{companyId}/customers/{customerId}")
     public ResponseEntity<HttpStatus> deleteCustomerFromCompany(@PathVariable("companyId") Long companyId,
             @PathVariable("customerId") Long customerId) {
-        var companyOpt = companyRepository.findById(companyId);
-        if (!companyOpt.isPresent()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        var company = companyOpt.get();
-
+        var company = companyRepository.findById(companyId).orElseThrow(() -> new NotFoundException("company not found"));
         company.removeCustomer(customerId);
         companyRepository.save(company);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
