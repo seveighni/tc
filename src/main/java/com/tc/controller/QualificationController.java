@@ -20,6 +20,7 @@ import com.tc.request.CreateQualificationRequest;
 import com.tc.response.QualificationResponse;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 @Tag(name = "Qualification")
 @RestController
@@ -74,7 +75,7 @@ public class QualificationController {
 
     @PostMapping("/drivers/{driverId}/qualifications")
     public ResponseEntity<QualificationResponse> createQualification(@PathVariable("driverId") Long driverId,
-            @RequestBody CreateQualificationRequest request) {
+            @RequestBody @Valid CreateQualificationRequest request) {
         try {
             var driverOpt = driverRepository.findById(driverId);
             if (!driverOpt.isPresent()) {
@@ -82,7 +83,7 @@ public class QualificationController {
             }
 
             var driver = driverOpt.get();
-            var qualificationType = request.type();
+            var qualificationType = request.type;
             Qualification exQualification = new Qualification(qualificationType);
             Example<Qualification> example = Example.of(exQualification);
 

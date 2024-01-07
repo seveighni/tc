@@ -31,6 +31,7 @@ import com.tc.specification.Common;
 import com.tc.specification.DriverSpecification;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 @Tag(name = "Driver")
 @RestController
@@ -69,14 +70,14 @@ public class DriverController {
 
     @PostMapping("/companies/{companyId}/drivers")
     public ResponseEntity<DriverResponse> hireDriver(@PathVariable("companyId") Long companyId,
-            @RequestBody CreateDriverRequest request) {
+            @RequestBody @Valid CreateDriverRequest request) {
         try {
             var companyOpt = companyRepository.findById(companyId);
             if (!companyOpt.isPresent()) {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
 
-            var update = new Driver(request.firstName(), request.lastName(), request.salary());
+            var update = new Driver(request.firstName, request.lastName, request.salary);
             update.setCompany(companyOpt.get());
             var driver = driverRepository.save(update);
 
@@ -115,16 +116,16 @@ public class DriverController {
 
     @PutMapping("/drivers/{id}")
     public ResponseEntity<DriverDetailedResponse> updateDriver(@PathVariable("id") Long id,
-            @RequestBody UpdateDriverRequest request) {
+            @RequestBody @Valid UpdateDriverRequest request) {
         try {
             var driverOpt = driverRepository.findById(id);
             if (!driverOpt.isPresent()) {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
             var driver = driverOpt.get();
-            driver.setFirstName(request.firstName());
-            driver.setLastName(request.lastName());
-            driver.setSalary(request.salary());
+            driver.setFirstName(request.firstName);
+            driver.setLastName(request.lastName);
+            driver.setSalary(request.salary);
             var updated = driverRepository.save(driver);
             var company = updated.getCompany();
             var response = new DriverDetailedResponse(

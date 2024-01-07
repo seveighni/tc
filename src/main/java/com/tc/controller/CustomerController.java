@@ -23,6 +23,7 @@ import com.tc.response.CustomerDetailedResponse;
 import com.tc.response.CustomerResponse;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 @Tag(name = "Customer")
 @RestController
@@ -71,14 +72,14 @@ public class CustomerController {
 
     @PostMapping("/companies/{companyId}/customers")
     public ResponseEntity<CustomerResponse> addCustomerToCompany(@PathVariable("companyId") Long companyId,
-            @RequestBody CreateCustomerRequest request) {
+            @RequestBody @Valid CreateCustomerRequest request) {
         try {
             var companyOpt = companyRepository.findById(companyId);
             if (!companyOpt.isPresent()) {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
             var company = companyOpt.get();
-            var customerId = request.id();
+            var customerId = request.id;
             // customer already exists
             if (customerId != null && customerId != 0) {
                 var customerOpt = customerRepository.findById(customerId);
@@ -93,7 +94,7 @@ public class CustomerController {
                 return new ResponseEntity<>(response, HttpStatus.CREATED);
             }
 
-            var customer = new Customer(request.name());
+            var customer = new Customer(request.name);
             company.addCustomer(customer);
             customerRepository.save(customer);
             var response = new CustomerResponse(customer.getId(), customer.getName());
@@ -106,7 +107,7 @@ public class CustomerController {
 
     @PutMapping("/customers/{id}")
     public ResponseEntity<CustomerDetailedResponse> updateCustomer(@PathVariable("id") Long id,
-            @RequestBody UpdateCustomerRequest request) {
+            @RequestBody @Valid UpdateCustomerRequest request) {
         try {
             var customerOpt = customerRepository.findById(id);
 
@@ -114,7 +115,7 @@ public class CustomerController {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
             var customer = customerOpt.get();
-            customer.setName(request.name());
+            customer.setName(request.name);
             var updated = customerRepository.save(customer);
             var response = new CustomerDetailedResponse(updated.getId(), updated.getName(),
                     updated.getCompanies().stream().map(company -> {

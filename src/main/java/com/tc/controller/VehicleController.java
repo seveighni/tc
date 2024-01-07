@@ -23,6 +23,7 @@ import com.tc.response.VehicleDetailedResponse;
 import com.tc.response.VehicleResponse;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 @Tag(name = "Vehicle")
 @RestController
@@ -52,14 +53,14 @@ public class VehicleController {
 
     @PostMapping("/companies/{companyId}/vehicles")
     public ResponseEntity<VehicleResponse> registerVehicle(@PathVariable("companyId") Long companyId,
-            @RequestBody CreateVehicleRequest request) {
+            @RequestBody @Valid CreateVehicleRequest request) {
         try {
             var companyOpt = companyRepository.findById(companyId);
             if (!companyOpt.isPresent()) {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
 
-            var vehicle = new Vehicle(request.registration(), request.type(), request.capacity());
+            var vehicle = new Vehicle(request.registration, request.type, request.capacity);
             vehicle.setCompany(companyOpt.get());
 
             var vehicleSaved = vehicleRepository.save(vehicle);
@@ -92,7 +93,7 @@ public class VehicleController {
 
     @PutMapping("/vehicles/{id}")
     public ResponseEntity<VehicleDetailedResponse> updateVehicle(@PathVariable("id") Long id,
-            @RequestBody UpdateVehicleRequest request) {
+            @RequestBody @Valid UpdateVehicleRequest request) {
         try {
             var vehicleOpt = vehicleRepository.findById(id);
 
@@ -100,9 +101,9 @@ public class VehicleController {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
             var vehicle = vehicleOpt.get();
-            vehicle.setRegistration(request.registration());
-            vehicle.setType(request.type());
-            vehicle.setCapacity(request.capacity());
+            vehicle.setRegistration(request.registration);
+            vehicle.setType(request.type);
+            vehicle.setCapacity(request.capacity);
             var vehicleSaved = vehicleRepository.save(vehicle);
 
             var company = vehicleSaved.getCompany();

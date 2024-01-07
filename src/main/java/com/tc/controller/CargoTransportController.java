@@ -28,6 +28,7 @@ import com.tc.response.CargoTransportResponse;
 import com.tc.specification.TransportSpecification;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 @Tag(name = "CargoTransport")
 @RestController
@@ -87,7 +88,7 @@ public class CargoTransportController {
 
     @PostMapping("/companies/{companyId}/cargotransport")
     public ResponseEntity<CargoTransportResponse> createCargoTransport(@PathVariable("companyId") Long companyId,
-            @RequestBody CreateCargoTransportRequest request) {
+            @RequestBody @Valid CreateCargoTransportRequest request) {
         try {
             var companyOpt = companyRepository.findById(companyId);
             if (!companyOpt.isPresent()) {
@@ -96,32 +97,32 @@ public class CargoTransportController {
             var company = companyOpt.get();
 
             var driverOpt = company.getDrivers().stream()
-                    .filter(driver -> driver.getId() == request.driverId()).findFirst();
+                    .filter(driver -> driver.getId() == request.driverId).findFirst();
             if (!driverOpt.isPresent()) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
 
             var customerOpt = company.getCustomers().stream()
-                    .filter(customer -> customer.getId() == request.customerId()).findFirst();
+                    .filter(customer -> customer.getId() == request.customerId).findFirst();
             if (!customerOpt.isPresent()) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
 
             var vehicleOpt = company.getVehicles().stream()
-                    .filter(vehicle -> vehicle.getId() == request.vehicleId()).findFirst();
+                    .filter(vehicle -> vehicle.getId() == request.vehicleId).findFirst();
             if (!vehicleOpt.isPresent()) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
 
             // TODO: validate dates and other fields
             var cargoTransport = new CargoTransport(
-                    request.startAddress(),
-                    request.endAddress(),
-                    request.startDate(),
-                    request.endDate(),
-                    request.cargoType(),
-                    request.cargoWeight(),
-                    request.price(),
+                    request.startAddress,
+                    request.endAddress,
+                    request.startDate,
+                    request.endDate,
+                    request.cargoType,
+                    request.cargoWeight,
+                    request.price,
                     false);
             var customer = customerOpt.get();
             var vehicle = vehicleOpt.get();
@@ -181,7 +182,7 @@ public class CargoTransportController {
 
     @PutMapping("/cargotransport/{id}")
     public ResponseEntity<CargoTransportResponse> updateCargoTransport(@PathVariable("id") Long id,
-            @RequestBody UpdateCargoTransportRequest request) {
+            @RequestBody @Valid UpdateCargoTransportRequest request) {
         try {
             var cargoTransportOpt = cargoTransportRepository.findById(id);
             if (!cargoTransportOpt.isPresent()) {
@@ -195,32 +196,32 @@ public class CargoTransportController {
             var company = companyOpt.get();
 
             var driverOpt = company.getDrivers().stream()
-                    .filter(driver -> driver.getId() == request.driverId()).findFirst();
+                    .filter(driver -> driver.getId() == request.driverId).findFirst();
             if (!driverOpt.isPresent()) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
 
             var customerOpt = company.getCustomers().stream()
-                    .filter(customer -> customer.getId() == request.customerId()).findFirst();
+                    .filter(customer -> customer.getId() == request.customerId).findFirst();
             if (!customerOpt.isPresent()) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
 
             var vehicleOpt = company.getVehicles().stream()
-                    .filter(vehicle -> vehicle.getId() == request.vehicleId()).findFirst();
+                    .filter(vehicle -> vehicle.getId() == request.vehicleId).findFirst();
             if (!vehicleOpt.isPresent()) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
 
             var update = new CargoTransport(
-                    request.startAddress(),
-                    request.endAddress(),
-                    request.startDate(),
-                    request.endDate(),
-                    request.cargoType(),
-                    request.cargoWeight(),
-                    request.price(),
-                    request.isPaid());
+                    request.startAddress,
+                    request.endAddress,
+                    request.startDate,
+                    request.endDate,
+                    request.cargoType,
+                    request.cargoWeight,
+                    request.price,
+                    request.isPaid);
 
             var customer = customerOpt.get();
             var vehicle = vehicleOpt.get();

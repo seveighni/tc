@@ -29,6 +29,7 @@ import com.tc.response.PassengerTransportResponse;
 import com.tc.specification.TransportSpecification;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 @Tag(name = "PassengerTransport")
 @RestController
@@ -91,7 +92,7 @@ public class PassengerTransportController {
     @PostMapping("/companies/{companyId}/passengertransport")
     public ResponseEntity<PassengerTransportResponse> createPassengerTransport(
             @PathVariable("companyId") Long companyId,
-            @RequestBody CreatePassengerTransportRequest request) {
+            @RequestBody @Valid CreatePassengerTransportRequest request) {
         try {
             var companyOpt = companyRepository.findById(companyId);
             if (!companyOpt.isPresent()) {
@@ -100,29 +101,29 @@ public class PassengerTransportController {
             var company = companyOpt.get();
 
             var driverOpt = company.getDrivers().stream()
-                    .filter(driver -> driver.getId() == request.driverId()).findFirst();
+                    .filter(driver -> driver.getId() == request.driverId).findFirst();
             if (!driverOpt.isPresent()) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
 
             var customerOpt = company.getCustomers().stream()
-                    .filter(customer -> customer.getId() == request.customerId()).findFirst();
+                    .filter(customer -> customer.getId() == request.customerId).findFirst();
             if (!customerOpt.isPresent()) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
 
             var vehicleOpt = company.getVehicles().stream()
-                    .filter(vehicle -> vehicle.getId() == request.vehicleId()).findFirst();
+                    .filter(vehicle -> vehicle.getId() == request.vehicleId).findFirst();
             if (!vehicleOpt.isPresent()) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
             var passengerTransport = new PassengerTransport(
-                    request.startAddress(),
-                    request.endAddress(),
-                    request.startDate(),
-                    request.endDate(),
-                    request.numberOfPassengers(),
-                    request.price(),
+                    request.startAddress,
+                    request.endAddress,
+                    request.startDate,
+                    request.endDate,
+                    request.numberOfPassengers,
+                    request.price,
                     false);
             var customer = customerOpt.get();
             var vehicle = vehicleOpt.get();
@@ -180,7 +181,7 @@ public class PassengerTransportController {
 
     @PutMapping("/passengertransport/{id}")
     public ResponseEntity<PassengerTransportResponse> updatePassengerTransport(@PathVariable("id") Long id,
-            @RequestBody UpdatePassengerTransportRequest request) {
+            @RequestBody @Valid UpdatePassengerTransportRequest request) {
         try {
             var passengerTransportOpt = passengerTransportRepository.findById(id);
             if (!passengerTransportOpt.isPresent()) {
@@ -194,31 +195,31 @@ public class PassengerTransportController {
             var company = companyOpt.get();
 
             var driverOpt = company.getDrivers().stream()
-                    .filter(driver -> driver.getId() == request.driverId()).findFirst();
+                    .filter(driver -> driver.getId() == request.driverId).findFirst();
             if (!driverOpt.isPresent()) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
 
             var customerOpt = company.getCustomers().stream()
-                    .filter(customer -> customer.getId() == request.customerId()).findFirst();
+                    .filter(customer -> customer.getId() == request.customerId).findFirst();
             if (!customerOpt.isPresent()) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
 
             var vehicleOpt = company.getVehicles().stream()
-                    .filter(vehicle -> vehicle.getId() == request.vehicleId()).findFirst();
+                    .filter(vehicle -> vehicle.getId() == request.vehicleId).findFirst();
             if (!vehicleOpt.isPresent()) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
 
             var update = new PassengerTransport(
-                    request.startAddress(),
-                    request.endAddress(),
-                    request.startDate(),
-                    request.endDate(),
-                    request.numberOfPassengers(),
-                    request.price(),
-                    request.isPaid());
+                    request.startAddress,
+                    request.endAddress,
+                    request.startDate,
+                    request.endDate,
+                    request.numberOfPassengers,
+                    request.price,
+                    request.isPaid);
             var customer = customerOpt.get();
             var vehicle = vehicleOpt.get();
             var driver = driverOpt.get();

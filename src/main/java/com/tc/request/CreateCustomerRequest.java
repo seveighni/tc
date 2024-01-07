@@ -1,3 +1,18 @@
 package com.tc.request;
 
-public record CreateCustomerRequest(Long id, String name){}
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
+public class CreateCustomerRequest {
+    @NotBlank(message = "id: must not be empty")
+    @NotNull(message = "id: must not be null")
+    @Min(value = 0, message = "id: must be positive")
+    public Long id;
+
+    @NotBlank(message = "name: must not be empty")
+    @NotNull(message = "name: must not be null")
+    @Size(min = 1, max = 50, message = "name: must have length between 1 and 50 characters")
+    public String name;
+}

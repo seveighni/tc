@@ -26,6 +26,7 @@ import com.tc.response.CompanyResponse;
 import com.tc.specification.Common;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 @Tag(name = "Company")
 @RestController
@@ -76,9 +77,9 @@ public class CompanyController {
     }
 
     @PostMapping("/companies")
-    public ResponseEntity<CompanyResponse> createCompany(@RequestBody CreateCompanyRequest request) {
+    public ResponseEntity<CompanyResponse> createCompany(@RequestBody @Valid CreateCompanyRequest request) {
         try {
-            var company = companyRepository.save(new Company(request.name()));
+            var company = companyRepository.save(new Company(request.name));
 
             var response = new CompanyResponse(
                     company.getId(),
@@ -91,13 +92,13 @@ public class CompanyController {
 
     @PutMapping("/companies/{id}")
     public ResponseEntity<CompanyResponse> updateCompany(@PathVariable("id") Long id,
-            @RequestBody UpdateCompanyRequest request) {
+            @RequestBody @Valid UpdateCompanyRequest request) {
         try {
             var company = companyRepository.findById(id);
 
             if (company.isPresent()) {
                 var update = company.get();
-                update.setName(request.name());
+                update.setName(request.name);
                 var updated = companyRepository.save(update);
                 var response = new CompanyResponse(
                         updated.getId(),
