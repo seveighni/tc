@@ -17,6 +17,12 @@ Now the java app can be started as well. If there is a need to edit the default 
 
 Once started the API documentation can be accessed through http://localhost:8080/swagger-ui/index.html.
 
+Run the following script if you want to populate the db with some sample data.
+
+```
+./hack/seed-data.sh
+```
+
 ### Cleanup
 
 To clean up the dev environment, stop the java app and then run:
