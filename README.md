@@ -1,7 +1,10 @@
 # Transport company
 
-## Development
+## Summary
 
+This is an educational project implementation of a transport company manager.
+
+## Development
 
 ### Startup
 
