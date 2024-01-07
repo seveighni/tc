@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.tc.exception.NotFoundException;
 import com.tc.model.Company;
 import com.tc.repository.CompanyRepository;
 import com.tc.repository.DriverRepository;
@@ -61,16 +62,11 @@ public class CompanyController {
     @GetMapping("/companies/{id}")
     public ResponseEntity<CompanyResponse> getCompanyById(@PathVariable("id") Long id) {
         try {
-            var data = companyRepository.findById(id);
-
-            if (data.isPresent()) {
-                var response = new CompanyResponse(
-                        data.get().getId(),
-                        data.get().getName());
-                return new ResponseEntity<>(response, HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
+            var company = companyRepository.findById(id).orElseThrow(() -> new NotFoundException("company not found"));
+            var response = new CompanyResponse(
+                    company.getId(),
+                    company.getName());
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -94,19 +90,14 @@ public class CompanyController {
     public ResponseEntity<CompanyResponse> updateCompany(@PathVariable("id") Long id,
             @RequestBody @Valid UpdateCompanyRequest request) {
         try {
-            var company = companyRepository.findById(id);
+            var company = companyRepository.findById(id).orElseThrow(() -> new NotFoundException("company not found"));
 
-            if (company.isPresent()) {
-                var update = company.get();
-                update.setName(request.name);
-                var updated = companyRepository.save(update);
-                var response = new CompanyResponse(
-                        updated.getId(),
-                        updated.getName());
-                return new ResponseEntity<>(response, HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
+            company.setName(request.name);
+            var updated = companyRepository.save(company);
+            var response = new CompanyResponse(
+                    updated.getId(),
+                    updated.getName());
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }

@@ -14,4 +14,10 @@ public class DriverSpecification {
             return cb.equal(companyDrivers.get("type"), qualification);
         };
     }
+
+    public static Specification<Driver> hasCompanyId(Long companyId) {
+        return (root, query, cb) -> {
+            return cb.equal(root.get("company").get("id"), companyId);
+        };
+    }
 }

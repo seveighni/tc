@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.tc.exception.NotFoundException;
 import com.tc.model.Driver;
 import com.tc.repository.CompanyRepository;
 import com.tc.repository.DriverRepository;
@@ -50,13 +51,11 @@ public class DriverController {
             @RequestParam(required = false) String qualification,
             @RequestParam(required = false) String sortBy,
             @RequestParam(defaultValue = "0") int page) {
-        var company = companyRepository.findById(companyId);
-        if (!company.isPresent()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        var company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new NotFoundException("company not found"));
 
-        Specification<Driver> filters = Specification
-                .where(qualification == null ? null : DriverSpecification.hasQualification(qualification));
+        Specification<Driver> filters = Specification.where(DriverSpecification.hasCompanyId(company.getId()))
+                .and(qualification == null ? null : DriverSpecification.hasQualification(qualification));
         Sort sort = sortBy == null ? Sort.unsorted() : Common.sortBy(sortBy);
         var drivers = driverRepository.findAll(filters, PageRequest.of(page, 20, sort));
         var driversResponse = drivers.stream().map(driver -> {
@@ -72,13 +71,10 @@ public class DriverController {
     public ResponseEntity<DriverResponse> hireDriver(@PathVariable("companyId") Long companyId,
             @RequestBody @Valid CreateDriverRequest request) {
         try {
-            var companyOpt = companyRepository.findById(companyId);
-            if (!companyOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-
+            var company = companyRepository.findById(companyId)
+                    .orElseThrow(() -> new NotFoundException("company not found"));
             var update = new Driver(request.firstName, request.lastName, request.salary);
-            update.setCompany(companyOpt.get());
+            update.setCompany(company);
             var driver = driverRepository.save(update);
 
             var response = new DriverResponse(driver.getId(), driver.getFirstName(),
@@ -92,11 +88,7 @@ public class DriverController {
     @GetMapping("/drivers/{id}")
     public ResponseEntity<DriverDetailedResponse> getDriverById(@PathVariable("id") Long id) {
         try {
-            var driverOpt = driverRepository.findById(id);
-            if (!driverOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-            var driver = driverOpt.get();
+            var driver = driverRepository.findById(id).orElseThrow(() -> new NotFoundException("driver not found"));
             var company = driver.getCompany();
             var response = new DriverDetailedResponse(
                     driver.getId(),
@@ -118,11 +110,7 @@ public class DriverController {
     public ResponseEntity<DriverDetailedResponse> updateDriver(@PathVariable("id") Long id,
             @RequestBody @Valid UpdateDriverRequest request) {
         try {
-            var driverOpt = driverRepository.findById(id);
-            if (!driverOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-            var driver = driverOpt.get();
+            var driver = driverRepository.findById(id).orElseThrow(() -> new NotFoundException("driver not found"));
             driver.setFirstName(request.firstName);
             driver.setLastName(request.lastName);
             driver.setSalary(request.salary);
