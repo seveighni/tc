@@ -17,7 +17,6 @@ public class UpdateVehicleRequest {
     @Pattern(regexp = "^(BUS|TRUCK)$", message = "type: must be one of [BUS, TRUCK]")
     public String type;
 
-    @NotBlank(message = "capacity: must not be empty")
     @NotNull(message = "capacity: must not be null")
     @Positive(message = "capacity: must be positive")
     public Integer capacity;

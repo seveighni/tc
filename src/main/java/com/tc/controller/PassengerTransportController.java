@@ -2,6 +2,7 @@ package com.tc.controller;
 
 import java.util.List;
 
+import org.javatuples.Quartet;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
@@ -16,7 +17,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.tc.exception.BadRequestException;
+import com.tc.exception.NotFoundException;
+import com.tc.model.Company;
+import com.tc.model.Customer;
+import com.tc.model.Driver;
 import com.tc.model.PassengerTransport;
+import com.tc.model.Vehicle;
 import com.tc.repository.CompanyRepository;
 import com.tc.repository.CustomerRepository;
 import com.tc.repository.DriverRepository;
@@ -61,12 +68,9 @@ public class PassengerTransportController {
             @PathVariable("companyId") Long companyId,
             @RequestParam(required = false) String destination,
             @RequestParam(defaultValue = "0") int page) {
-        var company = companyRepository.findById(companyId);
-        if (!company.isPresent()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        Specification<PassengerTransport> hasCompanyId = TransportSpecification.hasCompanyId(companyId);
+        var company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new NotFoundException("company not found"));
+        Specification<PassengerTransport> hasCompanyId = TransportSpecification.hasCompanyId(company.getId());
         Specification<PassengerTransport> filters = Specification
                 .where(hasCompanyId)
                 .and(destination == null ? null : TransportSpecification.hasDestination(destination));
@@ -93,71 +97,57 @@ public class PassengerTransportController {
     public ResponseEntity<PassengerTransportResponse> createPassengerTransport(
             @PathVariable("companyId") Long companyId,
             @RequestBody @Valid CreatePassengerTransportRequest request) {
-        try {
-            var companyOpt = companyRepository.findById(companyId);
-            if (!companyOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-            var company = companyOpt.get();
+        var references = getReferences(companyId, request.driverId, request.customerId, request.vehicleId);
+        var company = references.getValue0();
+        var driver = references.getValue1();
+        var customer = references.getValue2();
+        var vehicle = references.getValue3();
 
-            var driverOpt = company.getDrivers().stream()
-                    .filter(driver -> driver.getId() == request.driverId).findFirst();
-            if (!driverOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }
-
-            var customerOpt = company.getCustomers().stream()
-                    .filter(customer -> customer.getId() == request.customerId).findFirst();
-            if (!customerOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }
-
-            var vehicleOpt = company.getVehicles().stream()
-                    .filter(vehicle -> vehicle.getId() == request.vehicleId).findFirst();
-            if (!vehicleOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }
-            var passengerTransport = new PassengerTransport(
-                    request.startAddress,
-                    request.endAddress,
-                    request.startDate,
-                    request.endDate,
-                    request.numberOfPassengers,
-                    request.price,
-                    false);
-            var customer = customerOpt.get();
-            var vehicle = vehicleOpt.get();
-            var driver = driverOpt.get();
-            passengerTransport.setCompany(company);
-            passengerTransport.setCustomer(customer);
-            passengerTransport.setDriver(driver);
-            passengerTransport.setVehicle(vehicle);
-            var saved = this.passengerTransportRepository.save(passengerTransport);
-            var response = new PassengerTransportResponse(
-                    saved.getId(),
-                    saved.getStartAddress(),
-                    saved.getEndAddress(),
-                    saved.getStartDate(),
-                    saved.getEndDate(),
-                    saved.getNumberOfPassengers(),
-                    saved.getPrice(),
-                    saved.getIsPaid(),
-                    saved.getCustomer().getId(),
-                    saved.getVehicle().getId(),
-                    saved.getDriver().getId());
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        if (!vehicle.getType().equals("BUS")) {
+            throw new BadRequestException("passenger transport can be done only by bus");
         }
+
+        if (request.numberOfPassengers > vehicle.getCapacity()) {
+            throw new BadRequestException("vehicle capacity is not enough to carry all passengers");
+        }
+
+        if (request.startDate.isAfter(request.endDate)) {
+            throw new BadRequestException("start date cannot be after end date");
+        }
+
+        var passengerTransport = new PassengerTransport(
+                request.startAddress,
+                request.endAddress,
+                request.startDate,
+                request.endDate,
+                request.numberOfPassengers,
+                request.price,
+                false);
+
+        passengerTransport.setCompany(company);
+        passengerTransport.setCustomer(customer);
+        passengerTransport.setDriver(driver);
+        passengerTransport.setVehicle(vehicle);
+        var saved = this.passengerTransportRepository.save(passengerTransport);
+        var response = new PassengerTransportResponse(
+                saved.getId(),
+                saved.getStartAddress(),
+                saved.getEndAddress(),
+                saved.getStartDate(),
+                saved.getEndDate(),
+                saved.getNumberOfPassengers(),
+                saved.getPrice(),
+                saved.getIsPaid(),
+                saved.getCustomer().getId(),
+                saved.getVehicle().getId(),
+                saved.getDriver().getId());
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @GetMapping("/passengertransport/{id}")
     public ResponseEntity<PassengerTransportResponse> getPassengerTransportById(@PathVariable("id") Long id) {
-        var passengerTransportOpt = passengerTransportRepository.findById(id);
-        if (!passengerTransportOpt.isPresent()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        var passengerTransport = passengerTransportOpt.get();
+        var passengerTransport = passengerTransportRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("passenger transport not found"));
         var response = new PassengerTransportResponse(
                 passengerTransport.getId(),
                 passengerTransport.getStartAddress(),
@@ -182,69 +172,76 @@ public class PassengerTransportController {
     @PutMapping("/passengertransport/{id}")
     public ResponseEntity<PassengerTransportResponse> updatePassengerTransport(@PathVariable("id") Long id,
             @RequestBody @Valid UpdatePassengerTransportRequest request) {
-        try {
-            var passengerTransportOpt = passengerTransportRepository.findById(id);
-            if (!passengerTransportOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-            var passengerTransport = passengerTransportOpt.get();
-            var companyOpt = companyRepository.findById(passengerTransport.getCompany().getId());
-            if (!companyOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-            var company = companyOpt.get();
+        var passengerTransport = passengerTransportRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("passenger transport not found"));
+        var reference = getReferences(passengerTransport.getCompany().getId(), request.driverId, request.customerId,
+                request.vehicleId);
+        var company = reference.getValue0();
+        var driver = reference.getValue1();
+        var customer = reference.getValue2();
+        var vehicle = reference.getValue3();
 
-            var driverOpt = company.getDrivers().stream()
-                    .filter(driver -> driver.getId() == request.driverId).findFirst();
-            if (!driverOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }
-
-            var customerOpt = company.getCustomers().stream()
-                    .filter(customer -> customer.getId() == request.customerId).findFirst();
-            if (!customerOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }
-
-            var vehicleOpt = company.getVehicles().stream()
-                    .filter(vehicle -> vehicle.getId() == request.vehicleId).findFirst();
-            if (!vehicleOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }
-
-            var update = new PassengerTransport(
-                    request.startAddress,
-                    request.endAddress,
-                    request.startDate,
-                    request.endDate,
-                    request.numberOfPassengers,
-                    request.price,
-                    request.isPaid);
-            var customer = customerOpt.get();
-            var vehicle = vehicleOpt.get();
-            var driver = driverOpt.get();
-            update.setId(id);
-            update.setCompany(company);
-            update.setCustomer(customer);
-            update.setDriver(driver);
-            update.setVehicle(vehicle);
-
-            var updated = passengerTransportRepository.save(update);
-            var response = new PassengerTransportResponse(
-                    updated.getId(),
-                    updated.getStartAddress(),
-                    updated.getEndAddress(),
-                    updated.getStartDate(),
-                    updated.getEndDate(),
-                    updated.getNumberOfPassengers(),
-                    updated.getPrice(),
-                    updated.getIsPaid(),
-                    updated.getCustomer().getId(),
-                    updated.getVehicle().getId(),
-                    updated.getDriver().getId());
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        if (!vehicle.getType().equals("BUS")) {
+            throw new BadRequestException("passenger transport can be done only by bus");
         }
+
+        if (request.numberOfPassengers > vehicle.getCapacity()) {
+            throw new BadRequestException("vehicle capacity is not enough to carry all passengers");
+        }
+
+        if (request.startDate.isAfter(request.endDate)) {
+            throw new BadRequestException("start date cannot be after end date");
+        }
+
+        var update = new PassengerTransport(
+                request.startAddress,
+                request.endAddress,
+                request.startDate,
+                request.endDate,
+                request.numberOfPassengers,
+                request.price,
+                request.isPaid);
+
+        update.setId(id);
+        update.setCompany(company);
+        update.setCustomer(customer);
+        update.setDriver(driver);
+        update.setVehicle(vehicle);
+
+        var updated = passengerTransportRepository.save(update);
+        var response = new PassengerTransportResponse(
+                updated.getId(),
+                updated.getStartAddress(),
+                updated.getEndAddress(),
+                updated.getStartDate(),
+                updated.getEndDate(),
+                updated.getNumberOfPassengers(),
+                updated.getPrice(),
+                updated.getIsPaid(),
+                updated.getCustomer().getId(),
+                updated.getVehicle().getId(),
+                updated.getDriver().getId());
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    private Quartet<Company, Driver, Customer, Vehicle> getReferences(Long companyId, Long driverId,
+            Long customerId,
+            Long vehicleId) {
+        var company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new NotFoundException("company not found"));
+
+        var driver = company.getDrivers().stream()
+                .filter(d -> d.getId() == driverId).findFirst()
+                .orElseThrow(() -> new BadRequestException("no such driver working for the company"));
+
+        var customer = company.getCustomers().stream()
+                .filter(c -> c.getId() == customerId).findFirst().orElseThrow(
+                        () -> new BadRequestException("the company has no such customer"));
+
+        var vehicle = company.getVehicles().stream()
+                .filter(v -> v.getId() == vehicleId).findFirst().orElseThrow(
+                        () -> new BadRequestException("the company does not own such vehicle"));
+
+        return new Quartet<>(company, driver, customer, vehicle);
     }
 }

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.tc.exception.NotFoundException;
 import com.tc.model.Qualification;
 import com.tc.repository.DriverRepository;
 import com.tc.repository.QualificationRepository;
@@ -45,28 +46,17 @@ public class QualificationController {
 
     @GetMapping("/qualifications/{id}")
     public ResponseEntity<QualificationResponse> getQualificationById(@PathVariable("id") Long id) {
-        try {
-            var qualificationOpt = qualificationRepository.findById(id);
-
-            if (!qualificationOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-            var qualification = qualificationOpt.get();
-            var response = new QualificationResponse(qualification.getId(), qualification.getType());
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        var qualification = qualificationRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("qualification not found"));
+        var response = new QualificationResponse(qualification.getId(), qualification.getType());
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @GetMapping("/drivers/{driverId}/qualifications")
     public ResponseEntity<List<QualificationResponse>> getQualificationsByDriverId(
             @PathVariable("driverId") Long driverId) {
-        var driver = driverRepository.findById(driverId);
-        if (!driver.isPresent()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        var qualifications = qualificationRepository.findQualificationsByDriversId(driverId);
+        var driver = driverRepository.findById(driverId).orElseThrow(() -> new NotFoundException("driver not found"));
+        var qualifications = qualificationRepository.findQualificationsByDriversId(driver.getId());
         var qualificationsResponse = qualifications.stream().map(qualification -> {
             return new QualificationResponse(qualification.getId(), qualification.getType());
         }).toList();
@@ -76,50 +66,34 @@ public class QualificationController {
     @PostMapping("/drivers/{driverId}/qualifications")
     public ResponseEntity<QualificationResponse> createQualification(@PathVariable("driverId") Long driverId,
             @RequestBody @Valid CreateQualificationRequest request) {
-        try {
-            var driverOpt = driverRepository.findById(driverId);
-            if (!driverOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
+        var driver = driverRepository.findById(driverId)
+                .orElseThrow(() -> new NotFoundException("driver not found"));
+        var qualificationType = request.type;
+        Qualification exQualification = new Qualification(qualificationType);
+        Example<Qualification> example = Example.of(exQualification);
 
-            var driver = driverOpt.get();
-            var qualificationType = request.type;
-            Qualification exQualification = new Qualification(qualificationType);
-            Example<Qualification> example = Example.of(exQualification);
-
-            var qualificationOpt = qualificationRepository.findOne(example);
-            if (qualificationOpt.isPresent()) {
-                var qualification = qualificationOpt.get();
-                driver.addQualification(qualification);
-                driverRepository.save(driver);
-                var response = new QualificationResponse(qualification.getId(), qualification.getType());
-                return new ResponseEntity<>(response, HttpStatus.CREATED);
-            }
-
-            var qualification = new Qualification(qualificationType);
+        var qualificationOpt = qualificationRepository.findOne(example);
+        if (qualificationOpt.isPresent()) {
+            var qualification = qualificationOpt.get();
             driver.addQualification(qualification);
-            qualificationRepository.save(qualification);
+            driverRepository.save(driver);
             var response = new QualificationResponse(qualification.getId(), qualification.getType());
             return new ResponseEntity<>(response, HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
+        var qualification = new Qualification(qualificationType);
+        driver.addQualification(qualification);
+        qualificationRepository.save(qualification);
+        var response = new QualificationResponse(qualification.getId(), qualification.getType());
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @DeleteMapping("/drivers/{driverId}/qualifications/{qualificationId}")
     public ResponseEntity<HttpStatus> deleteQualification(@PathVariable("driverId") Long driverId,
             @PathVariable("qualificationId") Long qualificationId) {
-        try {
-            var driverOpt = driverRepository.findById(driverId);
-            if (!driverOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-            var driver = driverOpt.get();
-            driver.removeQualification(qualificationId);
-            driverRepository.save(driver);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        var driver = driverRepository.findById(driverId).orElseThrow(() -> new NotFoundException("driver not found"));
+        driver.removeQualification(qualificationId);
+        driverRepository.save(driver);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

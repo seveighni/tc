@@ -19,33 +19,26 @@ public class CreatePassengerTransportRequest {
         @Size(min = 1, max = 100, message = "endAddress: must have length between 1 and 100 characters")
         public String endAddress;
 
-        @NotBlank(message = "startDate: must not be empty")
         @NotNull(message = "startDate: must not be null")
         public LocalDate startDate;
 
-        @NotBlank(message = "endDate: must not be empty")
         @NotNull(message = "endDate: must not be null")
         public LocalDate endDate;
 
-        @NotBlank(message = "numberOfPassengers: must not be empty")
         @NotNull(message = "numberOfPassengers: must not be null")
         @Positive(message = "numberOfPassengers: must be positive")
         public Integer numberOfPassengers;
 
-        @NotBlank(message = "price: must not be empty")
         @NotNull(message = "price: must not be null")
         @Positive(message = "price: must be positive")
         public BigDecimal price;
 
-        @NotBlank(message = "customerId: must not be empty")
         @NotNull(message = "customerId: must not be null")
         public Long customerId;
 
-        @NotBlank(message = "vehicleId: must not be empty")
         @NotNull(message = "vehicleId: must not be null")
         public Long vehicleId;
 
-        @NotBlank(message = "driverId: must not be empty")
         @NotNull(message = "driverId: must not be null")
         public Long driverId;
 }

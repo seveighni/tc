@@ -18,7 +18,6 @@ public class UpdateDriverRequest {
     @Size(min = 1, max = 50, message = "lastName: must have length between 1 and 50 characters")
     public String lastName;
 
-    @NotBlank(message = "salary: must not be empty")
     @NotNull(message = "salary: must not be null")
     @Positive(message = "salary: must be positive")
     public BigDecimal salary;

@@ -6,9 +6,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public class CreateCustomerRequest {
-    @NotBlank(message = "id: must not be empty")
-    @NotNull(message = "id: must not be null")
-    @Min(value = 0, message = "id: must be positive")
     public Long id;
 
     @NotBlank(message = "name: must not be empty")

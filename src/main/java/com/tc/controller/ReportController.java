@@ -14,14 +14,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.tc.exception.NotFoundException;
 import com.tc.model.CargoTransport;
 import com.tc.model.PassengerTransport;
 import com.tc.repository.CargoTransportRepository;
 import com.tc.repository.CompanyRepository;
-import com.tc.repository.CustomerRepository;
-import com.tc.repository.DriverRepository;
 import com.tc.repository.PassengerTransportRepository;
-import com.tc.repository.VehicleRepository;
 import com.tc.response.report.CompanyReportResponse;
 import com.tc.response.report.DriverRef;
 import com.tc.response.report.TransportRef;
@@ -51,11 +49,8 @@ public class ReportController {
                         @PathVariable("companyId") Long companyId,
                         @RequestParam(required = false) LocalDate fromDate,
                         @RequestParam(required = false) LocalDate toDate) {
-                var company = companyRepository.findById(companyId);
-                if (!company.isPresent()) {
-                        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-                }
-
+                var company = companyRepository.findById(companyId).orElseThrow(() -> new NotFoundException(
+                                "company not found"));
                 var startDate = fromDate == null ? LocalDate.of(1970, 1, 1) : fromDate;
                 var endDate = toDate == null ? LocalDate.now() : toDate;
 
@@ -63,14 +58,15 @@ public class ReportController {
                                 startDate,
                                 endDate);
                 Specification<PassengerTransport> specPassengerHasCompanyId = TransportSpecification
-                                .hasCompanyId(companyId);
+                                .hasCompanyId(company.getId());
                 var passengerTransports = passengerTransportRepository.findAll(Specification
                                 .where(specPassengerInDateRange)
                                 .and(specPassengerHasCompanyId));
 
                 Specification<CargoTransport> specCargoInDateRange = TransportSpecification.endDateInRange(startDate,
                                 endDate);
-                Specification<CargoTransport> specCargoHasCompanyId = TransportSpecification.hasCompanyId(companyId);
+                Specification<CargoTransport> specCargoHasCompanyId = TransportSpecification
+                                .hasCompanyId(company.getId());
                 var cargoTransports = cargoTransportRepository.findAll(Specification
                                 .where(specCargoInDateRange)
                                 .and(specCargoHasCompanyId));

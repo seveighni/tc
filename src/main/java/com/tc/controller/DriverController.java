@@ -70,65 +70,53 @@ public class DriverController {
     @PostMapping("/companies/{companyId}/drivers")
     public ResponseEntity<DriverResponse> hireDriver(@PathVariable("companyId") Long companyId,
             @RequestBody @Valid CreateDriverRequest request) {
-        try {
-            var company = companyRepository.findById(companyId)
-                    .orElseThrow(() -> new NotFoundException("company not found"));
-            var update = new Driver(request.firstName, request.lastName, request.salary);
-            update.setCompany(company);
-            var driver = driverRepository.save(update);
+        var company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new NotFoundException("company not found"));
+        var update = new Driver(request.firstName, request.lastName, request.salary);
+        update.setCompany(company);
+        var driver = driverRepository.save(update);
 
-            var response = new DriverResponse(driver.getId(), driver.getFirstName(),
-                    driver.getLastName(), driver.getSalary());
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        var response = new DriverResponse(driver.getId(), driver.getFirstName(),
+                driver.getLastName(), driver.getSalary());
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @GetMapping("/drivers/{id}")
     public ResponseEntity<DriverDetailedResponse> getDriverById(@PathVariable("id") Long id) {
-        try {
-            var driver = driverRepository.findById(id).orElseThrow(() -> new NotFoundException("driver not found"));
-            var company = driver.getCompany();
-            var response = new DriverDetailedResponse(
-                    driver.getId(),
-                    driver.getFirstName(),
-                    driver.getLastName(),
-                    driver.getSalary(),
-                    new CompanyResponse(company.getId(), company.getName()),
-                    driver.getQualifications().stream().map(qualification -> {
-                        return new QualificationResponse(qualification.getId(), qualification.getType());
-                    }).toList());
+        var driver = driverRepository.findById(id).orElseThrow(() -> new NotFoundException("driver not found"));
+        var company = driver.getCompany();
+        var response = new DriverDetailedResponse(
+                driver.getId(),
+                driver.getFirstName(),
+                driver.getLastName(),
+                driver.getSalary(),
+                new CompanyResponse(company.getId(), company.getName()),
+                driver.getQualifications().stream().map(qualification -> {
+                    return new QualificationResponse(qualification.getId(), qualification.getType());
+                }).toList());
 
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PutMapping("/drivers/{id}")
     public ResponseEntity<DriverDetailedResponse> updateDriver(@PathVariable("id") Long id,
             @RequestBody @Valid UpdateDriverRequest request) {
-        try {
-            var driver = driverRepository.findById(id).orElseThrow(() -> new NotFoundException("driver not found"));
-            driver.setFirstName(request.firstName);
-            driver.setLastName(request.lastName);
-            driver.setSalary(request.salary);
-            var updated = driverRepository.save(driver);
-            var company = updated.getCompany();
-            var response = new DriverDetailedResponse(
-                    updated.getId(),
-                    updated.getFirstName(),
-                    updated.getLastName(),
-                    updated.getSalary(),
-                    new CompanyResponse(company.getId(), company.getName()),
-                    driver.getQualifications().stream().map(qualification -> {
-                        return new QualificationResponse(qualification.getId(), qualification.getType());
-                    }).toList());
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        var driver = driverRepository.findById(id).orElseThrow(() -> new NotFoundException("driver not found"));
+        driver.setFirstName(request.firstName);
+        driver.setLastName(request.lastName);
+        driver.setSalary(request.salary);
+        var updated = driverRepository.save(driver);
+        var company = updated.getCompany();
+        var response = new DriverDetailedResponse(
+                updated.getId(),
+                updated.getFirstName(),
+                updated.getLastName(),
+                updated.getSalary(),
+                new CompanyResponse(company.getId(), company.getName()),
+                driver.getQualifications().stream().map(qualification -> {
+                    return new QualificationResponse(qualification.getId(), qualification.getType());
+                }).toList());
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @DeleteMapping("/drivers/{id}")

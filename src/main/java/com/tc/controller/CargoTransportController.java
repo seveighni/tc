@@ -2,6 +2,7 @@ package com.tc.controller;
 
 import java.util.List;
 
+import org.javatuples.Quartet;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
@@ -15,7 +16,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.tc.exception.BadRequestException;
+import com.tc.exception.NotFoundException;
 import com.tc.model.CargoTransport;
+import com.tc.model.Company;
+import com.tc.model.Customer;
+import com.tc.model.Driver;
+import com.tc.model.Vehicle;
 import com.tc.repository.CompanyRepository;
 import com.tc.repository.CustomerRepository;
 import com.tc.repository.DriverRepository;
@@ -35,21 +43,11 @@ import jakarta.validation.Valid;
 @RequestMapping("/api")
 public class CargoTransportController {
     private final CompanyRepository companyRepository;
-    private final DriverRepository driverRepository;
-    private final CustomerRepository customerRepository;
-    private final VehicleRepository vehicleRepository;
     private final CargoTransportRepository cargoTransportRepository;
 
     public CargoTransportController(CompanyRepository companyRepository,
-            DriverRepository driverRepository,
-            CustomerRepository customerRepository,
-            VehicleRepository vehicleRepository,
-            CargoTransportRepository cargoTransportRepository,
-            PassengerTransportRepository passengerTransportRepository) {
+            CargoTransportRepository cargoTransportRepository) {
         this.companyRepository = companyRepository;
-        this.driverRepository = driverRepository;
-        this.customerRepository = customerRepository;
-        this.vehicleRepository = vehicleRepository;
         this.cargoTransportRepository = cargoTransportRepository;
     }
 
@@ -58,12 +56,9 @@ public class CargoTransportController {
             @PathVariable("companyId") Long companyId,
             @RequestParam(required = false) String destination,
             @RequestParam(defaultValue = "0") int page) {
-        var company = companyRepository.findById(companyId);
-        if (!company.isPresent()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        Specification<CargoTransport> hasCompanyId = TransportSpecification.hasCompanyId(companyId);
+        var company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new NotFoundException("company not found"));
+        Specification<CargoTransport> hasCompanyId = TransportSpecification.hasCompanyId(company.getId());
         Specification<CargoTransport> filters = Specification
                 .where(hasCompanyId)
                 .and(destination == null ? null : TransportSpecification.hasDestination(destination));
@@ -89,75 +84,58 @@ public class CargoTransportController {
     @PostMapping("/companies/{companyId}/cargotransport")
     public ResponseEntity<CargoTransportResponse> createCargoTransport(@PathVariable("companyId") Long companyId,
             @RequestBody @Valid CreateCargoTransportRequest request) {
-        try {
-            var companyOpt = companyRepository.findById(companyId);
-            if (!companyOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-            var company = companyOpt.get();
+        var references = getReferences(companyId, request.driverId, request.customerId, request.vehicleId);
+        var company = references.getValue0();
+        var driver = references.getValue1();
+        var customer = references.getValue2();
+        var vehicle = references.getValue3();
 
-            var driverOpt = company.getDrivers().stream()
-                    .filter(driver -> driver.getId() == request.driverId).findFirst();
-            if (!driverOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }
-
-            var customerOpt = company.getCustomers().stream()
-                    .filter(customer -> customer.getId() == request.customerId).findFirst();
-            if (!customerOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }
-
-            var vehicleOpt = company.getVehicles().stream()
-                    .filter(vehicle -> vehicle.getId() == request.vehicleId).findFirst();
-            if (!vehicleOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }
-
-            // TODO: validate dates and other fields
-            var cargoTransport = new CargoTransport(
-                    request.startAddress,
-                    request.endAddress,
-                    request.startDate,
-                    request.endDate,
-                    request.cargoType,
-                    request.cargoWeight,
-                    request.price,
-                    false);
-            var customer = customerOpt.get();
-            var vehicle = vehicleOpt.get();
-            var driver = driverOpt.get();
-            cargoTransport.setCompany(company);
-            cargoTransport.setCustomer(customer);
-            cargoTransport.setDriver(driver);
-            cargoTransport.setVehicle(vehicle);
-            var saved = this.cargoTransportRepository.save(cargoTransport);
-            var response = new CargoTransportResponse(
-                    saved.getId(),
-                    saved.getStartAddress(),
-                    saved.getEndAddress(),
-                    saved.getStartDate(),
-                    saved.getEndDate(),
-                    saved.getCargoType(),
-                    saved.getCargoWeight(),
-                    saved.getPrice(),
-                    saved.getIsPaid(),
-                    saved.getCustomer().getId(),
-                    saved.getVehicle().getId(),
-                    saved.getDriver().getId());
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        if (!vehicle.getType().equals("TRUCK")) {
+            throw new BadRequestException("cargo transport can be done only by truck");
         }
+
+        if (request.cargoWeight > vehicle.getCapacity()) {
+            throw new BadRequestException("cargo weight exceeds vehicle capacity");
+        }
+
+        if (request.startDate.isAfter(request.endDate)) {
+            throw new BadRequestException("start date cannot be after end date");
+        }
+
+        var cargoTransport = new CargoTransport(
+                request.startAddress,
+                request.endAddress,
+                request.startDate,
+                request.endDate,
+                request.cargoType,
+                request.cargoWeight,
+                request.price,
+                false);
+        cargoTransport.setCompany(company);
+        cargoTransport.setCustomer(customer);
+        cargoTransport.setDriver(driver);
+        cargoTransport.setVehicle(vehicle);
+        var saved = this.cargoTransportRepository.save(cargoTransport);
+        var response = new CargoTransportResponse(
+                saved.getId(),
+                saved.getStartAddress(),
+                saved.getEndAddress(),
+                saved.getStartDate(),
+                saved.getEndDate(),
+                saved.getCargoType(),
+                saved.getCargoWeight(),
+                saved.getPrice(),
+                saved.getIsPaid(),
+                saved.getCustomer().getId(),
+                saved.getVehicle().getId(),
+                saved.getDriver().getId());
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @GetMapping("/cargotransport/{id}")
     public ResponseEntity<CargoTransportResponse> getCargoTransportById(@PathVariable("id") Long id) {
-        var cargoTransportOpt = cargoTransportRepository.findById(id);
-        if (!cargoTransportOpt.isPresent()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        var cargoTransport = cargoTransportOpt.get();
+        var cargoTransport = cargoTransportRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("cargo transport not found"));
         var response = new CargoTransportResponse(
                 cargoTransport.getId(),
                 cargoTransport.getStartAddress(),
@@ -183,72 +161,78 @@ public class CargoTransportController {
     @PutMapping("/cargotransport/{id}")
     public ResponseEntity<CargoTransportResponse> updateCargoTransport(@PathVariable("id") Long id,
             @RequestBody @Valid UpdateCargoTransportRequest request) {
-        try {
-            var cargoTransportOpt = cargoTransportRepository.findById(id);
-            if (!cargoTransportOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-            var cargoTransport = cargoTransportOpt.get();
-            var companyOpt = companyRepository.findById(cargoTransport.getCompany().getId());
-            if (!companyOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-            var company = companyOpt.get();
+        var cargoTransport = cargoTransportRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("cargo transport not found"));
+        var references = getReferences(cargoTransport.getCompany().getId(), request.driverId, request.customerId,
+                request.vehicleId);
+        var company = references.getValue0();
+        var driver = references.getValue1();
+        var customer = references.getValue2();
+        var vehicle = references.getValue3();
 
-            var driverOpt = company.getDrivers().stream()
-                    .filter(driver -> driver.getId() == request.driverId).findFirst();
-            if (!driverOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }
-
-            var customerOpt = company.getCustomers().stream()
-                    .filter(customer -> customer.getId() == request.customerId).findFirst();
-            if (!customerOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }
-
-            var vehicleOpt = company.getVehicles().stream()
-                    .filter(vehicle -> vehicle.getId() == request.vehicleId).findFirst();
-            if (!vehicleOpt.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }
-
-            var update = new CargoTransport(
-                    request.startAddress,
-                    request.endAddress,
-                    request.startDate,
-                    request.endDate,
-                    request.cargoType,
-                    request.cargoWeight,
-                    request.price,
-                    request.isPaid);
-
-            var customer = customerOpt.get();
-            var vehicle = vehicleOpt.get();
-            var driver = driverOpt.get();
-            update.setId(id);
-            update.setCompany(company);
-            update.setCustomer(customer);
-            update.setDriver(driver);
-            update.setVehicle(vehicle);
-
-            var updated = cargoTransportRepository.save(update);
-            var response = new CargoTransportResponse(
-                    updated.getId(),
-                    updated.getStartAddress(),
-                    updated.getEndAddress(),
-                    updated.getStartDate(),
-                    updated.getEndDate(),
-                    updated.getCargoType(),
-                    updated.getCargoWeight(),
-                    updated.getPrice(),
-                    updated.getIsPaid(),
-                    updated.getCustomer().getId(),
-                    updated.getVehicle().getId(),
-                    updated.getDriver().getId());
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        if (!vehicle.getType().equals("TRUCK")) {
+            throw new BadRequestException("cargo transport can be done only by truck");
         }
+
+        if (request.cargoWeight > vehicle.getCapacity()) {
+            throw new BadRequestException("cargo weight exceeds vehicle capacity");
+        }
+
+        if (request.startDate.isAfter(request.endDate)) {
+            throw new BadRequestException("start date cannot be after end date");
+        }
+
+        var update = new CargoTransport(
+                request.startAddress,
+                request.endAddress,
+                request.startDate,
+                request.endDate,
+                request.cargoType,
+                request.cargoWeight,
+                request.price,
+                request.isPaid);
+
+        update.setId(id);
+        update.setCompany(company);
+        update.setCustomer(customer);
+        update.setDriver(driver);
+        update.setVehicle(vehicle);
+
+        var updated = cargoTransportRepository.save(update);
+        var response = new CargoTransportResponse(
+                updated.getId(),
+                updated.getStartAddress(),
+                updated.getEndAddress(),
+                updated.getStartDate(),
+                updated.getEndDate(),
+                updated.getCargoType(),
+                updated.getCargoWeight(),
+                updated.getPrice(),
+                updated.getIsPaid(),
+                updated.getCustomer().getId(),
+                updated.getVehicle().getId(),
+                updated.getDriver().getId());
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    private Quartet<Company, Driver, Customer, Vehicle> getReferences(Long companyId, Long driverId,
+            Long customerId,
+            Long vehicleId) {
+        var company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new NotFoundException("company not found"));
+
+        var driver = company.getDrivers().stream()
+                .filter(d -> d.getId() == driverId).findFirst()
+                .orElseThrow(() -> new BadRequestException("no such driver working for the company"));
+
+        var customer = company.getCustomers().stream()
+                .filter(c -> c.getId() == customerId).findFirst().orElseThrow(
+                        () -> new BadRequestException("the company has no such customer"));
+
+        var vehicle = company.getVehicles().stream()
+                .filter(v -> v.getId() == vehicleId).findFirst().orElseThrow(
+                        () -> new BadRequestException("the company does not own such vehicle"));
+
+        return new Quartet<>(company, driver, customer, vehicle);
     }
 }

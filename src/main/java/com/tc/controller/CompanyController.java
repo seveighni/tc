@@ -43,73 +43,51 @@ public class CompanyController {
     public ResponseEntity<List<CompanyResponse>> getCompanies(@RequestParam(required = false) String filterBy,
             @RequestParam(required = false) String sortBy,
             @RequestParam(defaultValue = "0") int page) {
-        try {
+        Specification<Company> filter = Common.likeFilter(filterBy);
 
-            Specification<Company> filter = Common.likeFilter(filterBy);
-
-            Sort sort = sortBy == null ? Sort.unsorted() : Common.sortBy(sortBy);
-            var companies = companyRepository.findAll(filter, PageRequest.of(page, 20, sort));
-            var response = companies.map(company -> new CompanyResponse(
-                    company.getId(),
-                    company.getName()));
-            return new ResponseEntity<>(response.getContent(), HttpStatus.OK);
-
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        Sort sort = sortBy == null ? Sort.unsorted() : Common.sortBy(sortBy);
+        var companies = companyRepository.findAll(filter, PageRequest.of(page, 20, sort));
+        var response = companies.map(company -> new CompanyResponse(
+                company.getId(),
+                company.getName()));
+        return new ResponseEntity<>(response.getContent(), HttpStatus.OK);
     }
 
     @GetMapping("/companies/{id}")
     public ResponseEntity<CompanyResponse> getCompanyById(@PathVariable("id") Long id) {
-        try {
-            var company = companyRepository.findById(id).orElseThrow(() -> new NotFoundException("company not found"));
-            var response = new CompanyResponse(
-                    company.getId(),
-                    company.getName());
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        var company = companyRepository.findById(id).orElseThrow(() -> new NotFoundException("company not found"));
+        var response = new CompanyResponse(
+                company.getId(),
+                company.getName());
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping("/companies")
     public ResponseEntity<CompanyResponse> createCompany(@RequestBody @Valid CreateCompanyRequest request) {
-        try {
-            var company = companyRepository.save(new Company(request.name));
+        var company = companyRepository.save(new Company(request.name));
 
-            var response = new CompanyResponse(
-                    company.getId(),
-                    company.getName());
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        var response = new CompanyResponse(
+                company.getId(),
+                company.getName());
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PutMapping("/companies/{id}")
     public ResponseEntity<CompanyResponse> updateCompany(@PathVariable("id") Long id,
             @RequestBody @Valid UpdateCompanyRequest request) {
-        try {
-            var company = companyRepository.findById(id).orElseThrow(() -> new NotFoundException("company not found"));
+        var company = companyRepository.findById(id).orElseThrow(() -> new NotFoundException("company not found"));
 
-            company.setName(request.name);
-            var updated = companyRepository.save(company);
-            var response = new CompanyResponse(
-                    updated.getId(),
-                    updated.getName());
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        company.setName(request.name);
+        var updated = companyRepository.save(company);
+        var response = new CompanyResponse(
+                updated.getId(),
+                updated.getName());
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @DeleteMapping("/companies/{id}")
     public ResponseEntity<HttpStatus> deleteCompany(@PathVariable("id") Long id) {
-        try {
-            companyRepository.deleteById(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        companyRepository.deleteById(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

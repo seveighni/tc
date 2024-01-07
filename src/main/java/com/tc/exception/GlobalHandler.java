@@ -33,7 +33,7 @@ public class GlobalHandler {
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<Map<String, List<String>>> handleBadRequestException(BadRequestException ex) {
         List<String> errors = Collections.singletonList(ex.getMessage());
-        return new ResponseEntity<>(getErrorsMap(errors), new HttpHeaders(), HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(getErrorsMap(errors), new HttpHeaders(), HttpStatus.BAD_REQUEST);
     }
 
     private Map<String, List<String>> getErrorsMap(List<String> errors) {

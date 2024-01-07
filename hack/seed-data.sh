@@ -77,7 +77,7 @@ curl -X 'POST' \
   -H 'Content-Type: application/json' \
   -d '{
   "registration": "123abc",
-  "type": "Bus",
+  "type": "BUS",
   "capacity": 12
 }'
 
@@ -155,6 +155,16 @@ curl -X 'PUT' \
   }'
 
 curl -X 'POST' \
+  'http://localhost:8080/api/companies/1/vehicles' \
+  -H 'accept: */*' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "registration": "456abc",
+  "type": "TRUCK",
+  "capacity": 1000
+}'
+
+curl -X 'POST' \
   'http://localhost:8080/api/companies/1/cargotransport' \
   -H 'accept: */*' \
   -H 'Content-Type: application/json' \
@@ -167,12 +177,12 @@ curl -X 'POST' \
   "cargoWeight": 123,
   "price": 100,
   "customerId": 1,
-  "vehicleId": 1,
+  "vehicleId": 2,
   "driverId": 2
 }'
 
 curl -X 'PUT' \
-  'http://localhost:8080/api/cargotransport/52' \
+  'http://localhost:8080/api/cargotransport/3' \
   -H 'accept: */*' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -185,6 +195,6 @@ curl -X 'PUT' \
   "price": 100,
   "isPaid": true,
   "customerId": 1,
-  "vehicleId": 1,
+  "vehicleId": 2,
   "driverId": 2
 }'

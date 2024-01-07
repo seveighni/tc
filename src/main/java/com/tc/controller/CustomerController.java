@@ -41,7 +41,8 @@ public class CustomerController {
 
     @GetMapping("/companies/{companyId}/customers")
     public ResponseEntity<List<CustomerResponse>> getCustomersByCompanyId(@PathVariable("companyId") Long companyId) {
-        var company = companyRepository.findById(companyId).orElseThrow(() -> new NotFoundException("company not found"));
+        var company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new NotFoundException("company not found"));
         var customers = customerRepository.findCustomersByCompaniesId(company.getId());
         var customersResponse = customers.stream().map(customer -> {
             return new CustomerResponse(customer.getId(), customer.getName());
@@ -51,61 +52,52 @@ public class CustomerController {
 
     @GetMapping("/customers/{id}")
     public ResponseEntity<CustomerDetailedResponse> getCustomerById(@PathVariable("id") Long id) {
-        try {
-            var customer = customerRepository.findById(id).orElseThrow(() -> new NotFoundException("customer not found"));
-            var companies = customer.getCompanies();
-            var response = new CustomerDetailedResponse(customer.getId(), customer.getName(),
-                    companies.stream().map(company -> {
-                        return new CompanyResponse(company.getId(), company.getName());
-                    }).toList());
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        var customer = customerRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("customer not found"));
+        var companies = customer.getCompanies();
+        var response = new CustomerDetailedResponse(customer.getId(), customer.getName(),
+                companies.stream().map(company -> {
+                    return new CompanyResponse(company.getId(), company.getName());
+                }).toList());
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping("/companies/{companyId}/customers")
     public ResponseEntity<CustomerResponse> addCustomerToCompany(@PathVariable("companyId") Long companyId,
             @RequestBody @Valid CreateCustomerRequest request) {
-        try {
-            var company = companyRepository.findById(companyId).orElseThrow(() -> new NotFoundException("company not found"));
-            var customerId = request.id;
-            // customer already exists
-            if (customerId != null && customerId != 0) {
-                var customer = customerRepository.findById(customerId).orElseThrow(() -> new NotFoundException("customer not found"));
-                company.addCustomer(customer);
-                companyRepository.save(company);
-
-                var response = new CustomerResponse(customer.getId(), customer.getName());
-                return new ResponseEntity<>(response, HttpStatus.CREATED);
-            }
-
-            var customer = new Customer(request.name);
+        var company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new NotFoundException("company not found"));
+        var customerId = request.id;
+        // customer already exists
+        if (customerId != null && customerId != 0) {
+            var customer = customerRepository.findById(customerId)
+                    .orElseThrow(() -> new NotFoundException("customer not found"));
             company.addCustomer(customer);
-            customerRepository.save(customer);
-            var response = new CustomerResponse(customer.getId(), customer.getName());
+            companyRepository.save(company);
 
+            var response = new CustomerResponse(customer.getId(), customer.getName());
             return new ResponseEntity<>(response, HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
+        var customer = new Customer(request.name);
+        company.addCustomer(customer);
+        customerRepository.save(customer);
+        var response = new CustomerResponse(customer.getId(), customer.getName());
+
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PutMapping("/customers/{id}")
     public ResponseEntity<CustomerDetailedResponse> updateCustomer(@PathVariable("id") Long id,
             @RequestBody @Valid UpdateCustomerRequest request) {
-        try {
-            var customer = customerRepository.findById(id).orElseThrow(() -> new NotFoundException("customer not found"));
-            customer.setName(request.name);
-            var updated = customerRepository.save(customer);
-            var response = new CustomerDetailedResponse(updated.getId(), updated.getName(),
-                    updated.getCompanies().stream().map(company -> {
-                        return new CompanyResponse(company.getId(), company.getName());
-                    }).toList());
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        var customer = customerRepository.findById(id).orElseThrow(() -> new NotFoundException("customer not found"));
+        customer.setName(request.name);
+        var updated = customerRepository.save(customer);
+        var response = new CustomerDetailedResponse(updated.getId(), updated.getName(),
+                updated.getCompanies().stream().map(company -> {
+                    return new CompanyResponse(company.getId(), company.getName());
+                }).toList());
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @DeleteMapping("/customers/{id}")
@@ -121,7 +113,8 @@ public class CustomerController {
     @DeleteMapping("/companies/{companyId}/customers/{customerId}")
     public ResponseEntity<HttpStatus> deleteCustomerFromCompany(@PathVariable("companyId") Long companyId,
             @PathVariable("customerId") Long customerId) {
-        var company = companyRepository.findById(companyId).orElseThrow(() -> new NotFoundException("company not found"));
+        var company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new NotFoundException("company not found"));
         company.removeCustomer(customerId);
         companyRepository.save(company);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
