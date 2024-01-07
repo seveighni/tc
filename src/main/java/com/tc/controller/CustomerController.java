@@ -24,6 +24,12 @@ import com.tc.response.CompanyResponse;
 import com.tc.response.CustomerDetailedResponse;
 import com.tc.response.CustomerResponse;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
@@ -39,8 +45,13 @@ public class CustomerController {
         this.customerRepository = customerRepository;
     }
 
+    @Operation(summary = "Retrieve customers of a company")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The customers were retrieved"),
+            @ApiResponse(responseCode = "404", description = "The company was not found"), })
     @GetMapping("/companies/{companyId}/customers")
-    public ResponseEntity<List<CustomerResponse>> getCustomersByCompanyId(@PathVariable("companyId") Long companyId) {
+    public ResponseEntity<List<CustomerResponse>> getCustomersByCompanyId(
+            @Parameter(description = "the id of the company") @PathVariable("companyId") Long companyId) {
         var company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new NotFoundException("company not found"));
         var customers = customerRepository.findCustomersByCompaniesId(company.getId());
@@ -50,8 +61,13 @@ public class CustomerController {
         return new ResponseEntity<>(customersResponse, HttpStatus.OK);
     }
 
+    @Operation(summary = "Retrieve a customer by its id")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The customer was retrieved"),
+            @ApiResponse(responseCode = "404", description = "The customer was not found"), })
     @GetMapping("/customers/{id}")
-    public ResponseEntity<CustomerDetailedResponse> getCustomerById(@PathVariable("id") Long id) {
+    public ResponseEntity<CustomerDetailedResponse> getCustomerById(
+            @Parameter(description = "the id of the customer") @PathVariable("id") Long id) {
         var customer = customerRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("customer not found"));
         var companies = customer.getCompanies();
@@ -62,9 +78,15 @@ public class CustomerController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @Operation(summary = "Create a customer for the company")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "The customer was created"),
+            @ApiResponse(responseCode = "400", description = "The request parameters were not valid"),
+            @ApiResponse(responseCode = "404") })
     @PostMapping("/companies/{companyId}/customers")
-    public ResponseEntity<CustomerResponse> addCustomerToCompany(@PathVariable("companyId") Long companyId,
-            @RequestBody @Valid CreateCustomerRequest request) {
+    public ResponseEntity<CustomerResponse> addCustomerToCompany(
+            @Parameter(description = "the id of the company") @PathVariable("companyId") Long companyId,
+            @Parameter(description = "the create parameters") @RequestBody @Valid CreateCustomerRequest request) {
         var company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new NotFoundException("company not found"));
         var customerId = request.id;
@@ -87,9 +109,15 @@ public class CustomerController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
+    @Operation(summary = "Update a customer")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The customer was updated"),
+            @ApiResponse(responseCode = "400", description = "The request parameters were not valid"),
+            @ApiResponse(responseCode = "404", description = "The customer was not found") })
     @PutMapping("/customers/{id}")
-    public ResponseEntity<CustomerDetailedResponse> updateCustomer(@PathVariable("id") Long id,
-            @RequestBody @Valid UpdateCustomerRequest request) {
+    public ResponseEntity<CustomerDetailedResponse> updateCustomer(
+            @Parameter(description = "the id of the customer") @PathVariable("id") Long id,
+            @Parameter(description = "the update parameters") @RequestBody @Valid UpdateCustomerRequest request) {
         var customer = customerRepository.findById(id).orElseThrow(() -> new NotFoundException("customer not found"));
         customer.setName(request.name);
         var updated = customerRepository.save(customer);
@@ -100,8 +128,13 @@ public class CustomerController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @Operation(summary = "Delete a customer")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "The was deleted or does not exist"),
+            @ApiResponse(responseCode = "400", description = "The customer is is still associated with companies") })
     @DeleteMapping("/customers/{id}")
-    public ResponseEntity<HttpStatus> deleteCustomer(@PathVariable("id") Long id) {
+    public ResponseEntity<HttpStatus> deleteCustomer(
+            @Parameter(description = "the id of the customer") @PathVariable("id") Long id) {
         var companies = companyRepository.findCompaniesByCustomersId(id);
         if (!companies.isEmpty()) {
             throw new BadRequestException("customer is still associated with companies");
@@ -110,9 +143,14 @@ public class CustomerController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    @Operation(summary = "Remove a customer from company customers")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "The customer was removed from company customers"),
+            @ApiResponse(responseCode = "404", description = "The company was not found") })
     @DeleteMapping("/companies/{companyId}/customers/{customerId}")
-    public ResponseEntity<HttpStatus> deleteCustomerFromCompany(@PathVariable("companyId") Long companyId,
-            @PathVariable("customerId") Long customerId) {
+    public ResponseEntity<HttpStatus> deleteCustomerFromCompany(
+            @Parameter(description = "the id of the company") @PathVariable("companyId") Long companyId,
+            @Parameter(description = "the id of the company") @PathVariable("customerId") Long customerId) {
         var company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new NotFoundException("company not found"));
         company.removeCustomer(customerId);

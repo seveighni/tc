@@ -23,6 +23,10 @@ import com.tc.response.CompanyResponse;
 import com.tc.response.VehicleDetailedResponse;
 import com.tc.response.VehicleResponse;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
@@ -38,8 +42,13 @@ public class VehicleController {
         this.vehicleRepository = vehicleRepository;
     }
 
+    @Operation(summary = "Retrieve vehicles of a company")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The vehicles were retrieved"),
+            @ApiResponse(responseCode = "404", description = "The company was not found") })
     @GetMapping("/companies/{companyId}/vehicles")
-    public ResponseEntity<List<VehicleResponse>> getVehiclesByCompanyId(@PathVariable("companyId") Long companyId) {
+    public ResponseEntity<List<VehicleResponse>> getVehiclesByCompanyId(
+            @Parameter(description = "the id of the company") @PathVariable("companyId") Long companyId) {
         var company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new NotFoundException("company not found"));
         List<Vehicle> vehicles = vehicleRepository.findByCompanyId(company.getId());
@@ -50,9 +59,15 @@ public class VehicleController {
         return new ResponseEntity<>(vehiclesResponse, HttpStatus.OK);
     }
 
+    @Operation(summary = "Register a vehicle for a company")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "The vehicle was registered"),
+            @ApiResponse(responseCode = "400", description = "The request parameters were not valid"),
+            @ApiResponse(responseCode = "404", description = "The company was not found") })
     @PostMapping("/companies/{companyId}/vehicles")
-    public ResponseEntity<VehicleResponse> registerVehicle(@PathVariable("companyId") Long companyId,
-            @RequestBody @Valid CreateVehicleRequest request) {
+    public ResponseEntity<VehicleResponse> registerVehicle(
+            @Parameter(description = "the id of the company") @PathVariable("companyId") Long companyId,
+            @Parameter(description = "the create parameretes") @RequestBody @Valid CreateVehicleRequest request) {
         var company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new NotFoundException("company not found"));
 
@@ -66,8 +81,13 @@ public class VehicleController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
+    @Operation(summary = "Retrieve a vehicle by its id")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The vehicle was retrieved"),
+            @ApiResponse(responseCode = "404", description = "The vehicle was not found") })
     @GetMapping("/vehicles/{id}")
-    public ResponseEntity<VehicleDetailedResponse> getVehicleById(@PathVariable("id") Long id) {
+    public ResponseEntity<VehicleDetailedResponse> getVehicleById(
+            @Parameter(description = "the id of the vehicle") @PathVariable("id") Long id) {
         var vehicle = vehicleRepository.findById(id).orElseThrow(() -> new NotFoundException("vehicle not found"));
         var company = vehicle.getCompany();
         var response = new VehicleDetailedResponse(vehicle.getId(), vehicle.getRegistration(), vehicle.getType(),
@@ -75,9 +95,15 @@ public class VehicleController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @Operation(summary = "Update a vehicle")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The vehicle was updated"),
+            @ApiResponse(responseCode = "400", description = "The request parameters were not valid"),
+            @ApiResponse(responseCode = "404", description = "The vehicle was not found") })
     @PutMapping("/vehicles/{id}")
-    public ResponseEntity<VehicleDetailedResponse> updateVehicle(@PathVariable("id") Long id,
-            @RequestBody @Valid UpdateVehicleRequest request) {
+    public ResponseEntity<VehicleDetailedResponse> updateVehicle(
+            @Parameter(description = "the id of the vehicle") @PathVariable("id") Long id,
+            @Parameter(description = "the update parameters") @RequestBody @Valid UpdateVehicleRequest request) {
         var vehicle = vehicleRepository.findById(id).orElseThrow(() -> new NotFoundException("vehicle not found"));
         vehicle.setRegistration(request.registration);
         vehicle.setType(request.type);
@@ -91,8 +117,12 @@ public class VehicleController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @Operation(summary = "Delete a vehicle")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "The vehicle was deleted or does not exist"), })
     @DeleteMapping("/vehicles/{id}")
-    public ResponseEntity<HttpStatus> deleteVehicle(@PathVariable("id") Long id) {
+    public ResponseEntity<HttpStatus> deleteVehicle(
+            @Parameter(description = "the id of the vehicle") @PathVariable("id") Long id) {
         vehicleRepository.deleteById(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

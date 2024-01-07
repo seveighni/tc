@@ -26,7 +26,12 @@ import com.tc.response.report.TransportRef;
 import com.tc.specification.TransportSpecification;
 import com.tc.util.Util;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.models.annotations.OpenAPI30;
 
 @Tag(name = "Report")
 @RestController
@@ -44,11 +49,15 @@ public class ReportController {
                 this.passengerTransportRepository = passengerTransportRepository;
         }
 
+        @Operation(summary = "Retrieve a report for a company")
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "The report was retrieved"),
+                        @ApiResponse(responseCode = "404", description = "The company was not found") })
         @GetMapping("/report/companies/{companyId}")
         public ResponseEntity<CompanyReportResponse> getCompanyReport(
-                        @PathVariable("companyId") Long companyId,
-                        @RequestParam(required = false) LocalDate fromDate,
-                        @RequestParam(required = false) LocalDate toDate) {
+                        @Parameter(description = "the id of the company") @PathVariable("companyId") Long companyId,
+                        @Parameter(description = "the start date to consider when gathering data for the report") @RequestParam(required = false) LocalDate fromDate,
+                        @Parameter(description = "the end date to consider when gathering data for the report") @RequestParam(required = false) LocalDate toDate) {
                 var company = companyRepository.findById(companyId).orElseThrow(() -> new NotFoundException(
                                 "company not found"));
                 var startDate = fromDate == null ? LocalDate.of(1970, 1, 1) : fromDate;

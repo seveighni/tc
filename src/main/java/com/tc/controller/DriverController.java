@@ -31,6 +31,10 @@ import com.tc.response.QualificationResponse;
 import com.tc.specification.Common;
 import com.tc.specification.DriverSpecification;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
@@ -46,11 +50,16 @@ public class DriverController {
         this.driverRepository = driverRepository;
     }
 
+    @Operation(summary = "Retrieve drivers of a company")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The drivers were retrieved"),
+            @ApiResponse(responseCode = "404", description = "The company was not found") })
     @GetMapping("/companies/{companyId}/drivers")
-    public ResponseEntity<List<DriverScopedResponse>> getDriversByCompanyId(@PathVariable("companyId") Long companyId,
-            @RequestParam(required = false) String qualification,
-            @RequestParam(required = false) String sortBy,
-            @RequestParam(defaultValue = "0") int page) {
+    public ResponseEntity<List<DriverScopedResponse>> getDriversByCompanyId(
+            @Parameter(description = "the id of the company") @PathVariable("companyId") Long companyId,
+            @Parameter(description = "the qualification of the drivers") @RequestParam(required = false) String qualification,
+            @Parameter(description = "a set properties to sort by, example value name=ASC") @RequestParam(required = false) String sortBy,
+            @Parameter(description = "the requested page") @RequestParam(defaultValue = "0") int page) {
         var company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new NotFoundException("company not found"));
 
@@ -67,9 +76,15 @@ public class DriverController {
         return new ResponseEntity<>(driversResponse, HttpStatus.OK);
     }
 
+    @Operation(summary = "Hire a driver for a company")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The driver was hired"),
+            @ApiResponse(responseCode = "400", description = "The request parameters were not valid"),
+            @ApiResponse(responseCode = "404", description = "The company was not found") })
     @PostMapping("/companies/{companyId}/drivers")
-    public ResponseEntity<DriverResponse> hireDriver(@PathVariable("companyId") Long companyId,
-            @RequestBody @Valid CreateDriverRequest request) {
+    public ResponseEntity<DriverResponse> hireDriver(
+            @Parameter(description = "the id of the company") @PathVariable("companyId") Long companyId,
+            @Parameter(description = "the create parameters") @RequestBody @Valid CreateDriverRequest request) {
         var company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new NotFoundException("company not found"));
         var update = new Driver(request.firstName, request.lastName, request.salary);
@@ -81,8 +96,13 @@ public class DriverController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
+    @Operation(summary = "Retrieve a driver by its id")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The driver was retrieved"),
+            @ApiResponse(responseCode = "404", description = "The driver was not found") })
     @GetMapping("/drivers/{id}")
-    public ResponseEntity<DriverDetailedResponse> getDriverById(@PathVariable("id") Long id) {
+    public ResponseEntity<DriverDetailedResponse> getDriverById(
+            @Parameter(description = "the id of the driver") @PathVariable("id") Long id) {
         var driver = driverRepository.findById(id).orElseThrow(() -> new NotFoundException("driver not found"));
         var company = driver.getCompany();
         var response = new DriverDetailedResponse(
@@ -98,9 +118,15 @@ public class DriverController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @Operation(summary = "Update a driver")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The driver was updated"),
+            @ApiResponse(responseCode = "400", description = "The request parameters were not valid"),
+            @ApiResponse(responseCode = "404", description = "The driver was not found") })
     @PutMapping("/drivers/{id}")
-    public ResponseEntity<DriverDetailedResponse> updateDriver(@PathVariable("id") Long id,
-            @RequestBody @Valid UpdateDriverRequest request) {
+    public ResponseEntity<DriverDetailedResponse> updateDriver(
+            @Parameter(description = "the id of the driver") @PathVariable("id") Long id,
+            @Parameter(description = "the update parameters") @RequestBody @Valid UpdateDriverRequest request) {
         var driver = driverRepository.findById(id).orElseThrow(() -> new NotFoundException("driver not found"));
         driver.setFirstName(request.firstName);
         driver.setLastName(request.lastName);
@@ -119,8 +145,12 @@ public class DriverController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @Operation(summary = "Delete a driver")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "The driver was deleted or does not exist"), })
     @DeleteMapping("/drivers/{id}")
-    public ResponseEntity<HttpStatus> deleteDriver(@PathVariable("id") long id) {
+    public ResponseEntity<HttpStatus> deleteDriver(
+            @Parameter(description = "the id of the driver") @PathVariable("id") long id) {
         driverRepository.deleteById(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
